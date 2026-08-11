@@ -1,0 +1,28 @@
+{
+  "name": "campus-task-sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sincroniza pendencias do calendario do Campus Virtual com gerenciadores de tarefas.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run typecheck && npm test",
+    "start": "node dist/src/cli.js",
+    "sync": "tsx src/cli.ts",
+    "sync:dry": "tsx src/cli.ts --dry-run",
+    "test": "node --import tsx --test test/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ical.js": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}
