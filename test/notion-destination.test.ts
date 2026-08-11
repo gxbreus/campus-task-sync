@@ -114,3 +114,37 @@ test("cria uma pagina com identificador externo e prazo", async () => {
     ],
   });
 });
+
+test("nao apaga uma abertura confirmada quando o calendario nao informa a data", async () => {
+  let body: Record<string, unknown> | undefined;
+  const destination = new NotionDestination({
+    token: "test-token",
+    dataSourceId: "source-1",
+    fetcher: async (_input, init) => {
+      body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return jsonResponse({ id: "page-1" });
+    },
+    now: () => new Date("2026-08-11T12:00:00.000Z"),
+  });
+
+  await destination.update(
+    "page-1",
+    {
+      externalId: "evento-1",
+      title: "Tarefa 1",
+      course: "Inteligência Artificial",
+      dueAt: "2026-08-19T02:00:00.000Z",
+      openingInformation: "Data não informada pelo calendário do Campus",
+    },
+    {
+      destinationId: "page-1",
+      externalId: "evento-1",
+      status: "pending",
+      hasSuggestedAnswer: false,
+    },
+  );
+
+  const properties = body?.properties as Record<string, unknown>;
+  assert.equal("Abertura" in properties, false);
+  assert.equal("Informação da abertura" in properties, false);
+});
