@@ -17,6 +17,7 @@ export type CampusTask = {
   dueAt?: string;
   openingInformation: string;
   attachments?: TaskAttachment[];
+  legacyExternalIds?: string[];
 };
 
 export type ManagedTaskStatus = "pending" | "completed" | "cancelled";
