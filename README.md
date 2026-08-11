@@ -69,6 +69,15 @@ cp .env.example .env
 
 Preencha o `.env`. A URL do calendario e o token do Notion sao segredos e nunca devem ser commitados.
 
+Para obter localmente um token da API oficial do Moodle, sem armazenar a senha:
+
+```bash
+npm run setup:moodle
+```
+
+O comando envia as credenciais diretamente ao Campus Virtual, valida o token e
+salva somente `MOODLE_TOKEN` no `.env` com permissao restrita.
+
 Para apenas conferir o que o Campus Virtual retorna:
 
 ```bash
