@@ -17,9 +17,13 @@ function eventUrl(component: ICAL.Component, description?: string): string | und
 
 function courseName(component: ICAL.Component): string | undefined {
   const categories = component.getFirstPropertyValue("categories");
-  if (Array.isArray(categories)) return cleanText(categories.join(", "));
-  if (typeof categories === "string") return cleanText(categories);
-  return undefined;
+  const value = Array.isArray(categories)
+    ? cleanText(categories.join(", "))
+    : typeof categories === "string"
+      ? cleanText(categories)
+      : undefined;
+  const courseCode = value?.match(/^([A-Z]{2,}\d{3})/i)?.[1];
+  return courseCode?.toUpperCase() ?? value;
 }
 
 export function parseCalendar(ics: string): CampusTask[] {

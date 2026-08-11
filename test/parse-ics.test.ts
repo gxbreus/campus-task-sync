@@ -13,7 +13,7 @@ test("converte um evento do Moodle em tarefa", async () => {
       title: "Entrega da atividade 1",
       description:
         "Leia o enunciado e envie o trabalho.\nhttps://campusvirtual.ufla.br/mod/assign/view.php?id=123",
-      course: "Algoritmos",
+      course: "GCC220",
       sourceUrl: "https://campusvirtual.ufla.br/mod/assign/view.php?id=123",
       startsAt: "2026-08-20T23:59:00.000Z",
       endsAt: "2026-08-21T00:00:00.000Z",

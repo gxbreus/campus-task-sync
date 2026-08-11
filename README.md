@@ -10,6 +10,8 @@ O MVP ja possui:
 - conversao de eventos em tarefas normalizadas;
 - sincronizacao idempotente pelo `UID` do evento;
 - criacao, atualizacao e cancelamento no Notion;
+- configuracao automatica de uma base estilizada no Notion;
+- checkbox de conclusao e cores por disciplina;
 - preservacao de tarefas marcadas manualmente como concluidas;
 - modo local de validacao sem acesso ao Notion;
 - execucao automatica a cada 30 minutos pelo GitHub Actions.
@@ -18,23 +20,34 @@ O MVP ja possui:
 
 - Node.js 22 ou mais recente;
 - uma URL dinamica de exportacao do calendario;
-- para sincronizar, uma conexao do Notion e uma base compartilhada com ela.
+- para sincronizar, uma conexao do Notion e uma pagina compartilhada com ela.
 
 ## Base do Notion
 
-Crie uma base com exatamente estas propriedades:
+O comando de configuracao cria automaticamente uma base com estas propriedades:
 
 | Propriedade | Tipo | Valores esperados |
 | --- | --- | --- |
 | `Nome` | Titulo | — |
+| `Concluida` | Checkbox | — |
 | `Prazo` | Data | — |
-| `Disciplina` | Texto | — |
+| `Disciplina` | Selecao colorida | uma opcao por disciplina |
 | `Descricao` | Texto | — |
 | `Link` | URL | — |
 | `ID externo` | Texto | — |
 | `Origem` | Selecao | `Campus Virtual` |
-| `Situacao` | Selecao | `Pendente`, `Concluida`, `Cancelada` |
+| `Situacao` | Selecao | `Pendente`, `Cancelada` |
 | `Sincronizado em` | Data | — |
+
+Crie somente uma pagina vazia, compartilhe-a com a conexao e configure
+`NOTION_PARENT_PAGE_URL`. Depois execute:
+
+```bash
+npm run setup:notion
+```
+
+O comando cria a base, as propriedades, as cores por disciplina e as visoes de
+quadro, calendario e pendencias. O `NOTION_DATA_SOURCE_ID` e salvo no `.env`.
 
 ## Configuracao local
 

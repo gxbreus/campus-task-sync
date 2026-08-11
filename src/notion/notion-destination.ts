@@ -37,8 +37,12 @@ function propertySelect(property: unknown): string | undefined {
   return typeof select?.name === "string" ? select.name : undefined;
 }
 
-function statusFromNotion(value?: string): ManagedTaskStatus {
-  if (value === "Concluida") return "completed";
+function propertyCheckbox(property: unknown): boolean {
+  return objectValue(property)?.checkbox === true;
+}
+
+function statusFromNotion(completed: boolean, value?: string): ManagedTaskStatus {
+  if (completed) return "completed";
   if (value === "Cancelada") return "cancelled";
   return "pending";
 }
@@ -53,7 +57,7 @@ function taskProperties(task: CampusTask, syncedAt: string): JsonObject {
       },
     },
     Disciplina: {
-      rich_text: task.course ? [{ text: { content: task.course } }] : [],
+      select: task.course ? { name: task.course } : null,
     },
     Descricao: {
       rich_text: task.description ? [{ text: { content: task.description.slice(0, 2000) } }] : [],
@@ -116,7 +120,10 @@ export class NotionDestination implements TaskDestination {
           tasks.push({
             destinationId,
             externalId,
-            status: statusFromNotion(propertySelect(properties?.Situacao)),
+            status: statusFromNotion(
+              propertyCheckbox(properties?.Concluida),
+              propertySelect(properties?.Situacao),
+            ),
           });
         }
       }
@@ -134,6 +141,7 @@ export class NotionDestination implements TaskDestination {
         parent: { type: "data_source_id", data_source_id: this.options.dataSourceId },
         properties: {
           ...taskProperties(task, this.now().toISOString()),
+          Concluida: { checkbox: false },
           Situacao: { select: { name: "Pendente" } },
         },
       }),

@@ -25,7 +25,8 @@ test("lista apenas tarefas gerenciadas e interpreta a situacao", async () => {
           id: "page-1",
           properties: {
             "ID externo": { rich_text: [{ plain_text: "evento-1" }] },
-            Situacao: { select: { name: "Concluida" } },
+            Concluida: { checkbox: true },
+            Situacao: { select: { name: "Pendente" } },
           },
         },
       ],
@@ -62,6 +63,7 @@ test("cria uma pagina com identificador externo e prazo", async () => {
     externalId: "evento-1",
     title: "Trabalho",
     startsAt: "2026-08-20T23:59:00.000Z",
+    course: "GCC220",
   });
 
   assert.deepEqual(body?.parent, {
@@ -73,4 +75,6 @@ test("cria uma pagina com identificador externo e prazo", async () => {
     rich_text: [{ text: { content: "evento-1" } }],
   });
   assert.deepEqual(properties.Situacao, { select: { name: "Pendente" } });
+  assert.deepEqual(properties.Concluida, { checkbox: false });
+  assert.deepEqual(properties.Disciplina, { select: { name: "GCC220" } });
 });
