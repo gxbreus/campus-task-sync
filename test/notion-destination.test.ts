@@ -22,6 +22,15 @@ test("lista apenas tarefas gerenciadas e interpreta a situacao", async () => {
     return jsonResponse({
       results: [
         {
+          id: "page-in-trash",
+          in_trash: true,
+          properties: {
+            "ID externo": { rich_text: [{ plain_text: "evento-antigo" }] },
+            Concluida: { checkbox: false },
+            Situacao: { select: { name: "Pendente" } },
+          },
+        },
+        {
           id: "page-1",
           properties: {
             "ID externo": { rich_text: [{ plain_text: "evento-1" }] },
@@ -55,6 +64,7 @@ test("cria uma pagina com identificador externo e prazo", async () => {
   const destination = new NotionDestination({
     token: "test-token",
     dataSourceId: "source-1",
+    assigneeUserId: "user-1",
     fetcher,
     now: () => new Date("2026-08-11T12:00:00.000Z"),
   });
@@ -62,7 +72,8 @@ test("cria uma pagina com identificador externo e prazo", async () => {
   await destination.create({
     externalId: "evento-1",
     title: "Trabalho",
-    startsAt: "2026-08-20T23:59:00.000Z",
+    opensAt: "2026-08-15T12:00:00.000Z",
+    dueAt: "2026-08-20T23:59:00.000Z",
     course: "GCC220",
   });
 
@@ -77,4 +88,8 @@ test("cria uma pagina com identificador externo e prazo", async () => {
   assert.deepEqual(properties.Situacao, { select: { name: "Pendente" } });
   assert.deepEqual(properties.Concluida, { checkbox: false });
   assert.deepEqual(properties.Disciplina, { select: { name: "GCC220" } });
+  assert.deepEqual(properties.Abertura, { date: { start: "2026-08-15T12:00:00.000Z" } });
+  assert.deepEqual(properties.Prazo, { date: { start: "2026-08-20T23:59:00.000Z" } });
+  assert.deepEqual(properties.Alerta, { select: { name: "🟢 No prazo" } });
+  assert.deepEqual(properties.Responsavel, { people: [{ id: "user-1" }] });
 });

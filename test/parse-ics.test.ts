@@ -15,10 +15,42 @@ test("converte um evento do Moodle em tarefa", async () => {
         "Leia o enunciado e envie o trabalho.\nhttps://campusvirtual.ufla.br/mod/assign/view.php?id=123",
       course: "GCC220",
       sourceUrl: "https://campusvirtual.ufla.br/mod/assign/view.php?id=123",
-      startsAt: "2026-08-20T23:59:00.000Z",
-      endsAt: "2026-08-21T00:00:00.000Z",
+      dueAt: "2026-08-20T23:59:00.000Z",
     },
   ]);
+});
+
+test("une abertura e encerramento da mesma atividade", () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:abertura-1
+DTSTART:20260810T231900Z
+SUMMARY:Escolha o artigo clicando aqui (Abertura da enquete)
+DESCRIPTION:https://campusvirtual.ufla.br/mod/choice/view.php?id=10
+CATEGORIES:GCC220-2026/2
+END:VEVENT
+BEGIN:VEVENT
+UID:encerramento-1
+DTSTART:20260817T025900Z
+SUMMARY:Escolha o artigo clicando aqui (Encerramento da enquete)
+DESCRIPTION:https://campusvirtual.ufla.br/mod/choice/view.php?id=10
+CATEGORIES:GCC220-2026/2
+END:VEVENT
+END:VCALENDAR`;
+
+  const tasks = parseCalendar(ics);
+  assert.equal(tasks.length, 1);
+  assert.match(tasks[0]?.externalId ?? "", /^campus-group-/);
+  assert.deepEqual(tasks[0], {
+    externalId: tasks[0]?.externalId,
+    title: "Escolha o artigo clicando aqui",
+    description: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
+    course: "GCC220",
+    sourceUrl: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
+    opensAt: "2026-08-10T23:19:00.000Z",
+    dueAt: "2026-08-17T02:59:00.000Z",
+  });
 });
 
 test("aceita calendario vazio", () => {

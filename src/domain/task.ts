@@ -4,8 +4,8 @@ export type CampusTask = {
   description?: string;
   course?: string;
   sourceUrl?: string;
-  startsAt: string;
-  endsAt?: string;
+  opensAt?: string;
+  dueAt?: string;
 };
 
 export type ManagedTaskStatus = "pending" | "completed" | "cancelled";

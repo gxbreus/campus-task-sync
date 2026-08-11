@@ -19,6 +19,7 @@ async function main(): Promise<void> {
       created: result.created,
       dataSourceConfigured: true,
       viewsCreated: result.viewsCreated,
+      notificationsConfigured: Boolean(result.assigneeUserId),
     }),
   );
 }

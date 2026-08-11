@@ -38,7 +38,7 @@ class FakeDestination implements TaskDestination {
 const task = (externalId: string): CampusTask => ({
   externalId,
   title: externalId,
-  startsAt: "2026-08-20T23:59:00.000Z",
+  dueAt: "2026-08-20T23:59:00.000Z",
 });
 
 test("cria, atualiza e cancela tarefas de forma idempotente", async () => {

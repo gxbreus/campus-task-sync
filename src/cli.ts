@@ -20,6 +20,7 @@ async function main(): Promise<void> {
   const destination = new NotionDestination({
     token: config.notionToken,
     dataSourceId: config.notionDataSourceId,
+    assigneeUserId: config.notionAssigneeUserId,
   });
   const result = await syncTasks(tasks, destination);
 
