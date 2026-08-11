@@ -1,3 +1,11 @@
+export type TaskAttachment = {
+  name: string;
+  mimeType?: string;
+  size?: number;
+  browserUrl?: string;
+  apiUrl?: string;
+};
+
 export type CampusTask = {
   externalId: string;
   title: string;
@@ -8,6 +16,7 @@ export type CampusTask = {
   opensAt?: string;
   dueAt?: string;
   openingInformation: string;
+  attachments?: TaskAttachment[];
 };
 
 export type ManagedTaskStatus = "pending" | "completed" | "cancelled";

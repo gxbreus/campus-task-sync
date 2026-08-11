@@ -17,6 +17,7 @@ O MVP ja possui:
 - atribuicao de novas tarefas ao usuario para notificacoes do Notion;
 - nomes completos das disciplinas e titulo contextual nas notificacoes;
 - link clicavel para o evento correspondente no calendario do Campus;
+- consulta autenticada da atividade para obter abertura, prazo, enunciado, link direto e anexos;
 - sugestao de resposta opcional pela OpenAI, com pesquisa web e leitura de anexos acessiveis;
 - preservacao de tarefas marcadas manualmente como concluidas;
 - modo local de validacao sem acesso ao Notion;
@@ -98,10 +99,12 @@ Cadastre estes *Actions secrets* no repositorio:
 - `NOTION_TOKEN`
 - `NOTION_DATA_SOURCE_ID`
 - `NOTION_ASSIGNEE_USER_ID`
+- `MOODLE_TOKEN`
 - `OPENAI_API_KEY` (opcional, necessario para gerar respostas)
 
-Cadastre `OPENAI_MODEL` como *Actions variable*. O valor padrao recomendado para
-este projeto e `gpt-5.6-terra`.
+Cadastre `OPENAI_MODEL` e `ENABLE_AI_SUGGESTIONS` como *Actions variables*. A IA
+permanece desativada enquanto `ENABLE_AI_SUGGESTIONS` nao for `true`. O valor
+padrao recomendado para o modelo e `gpt-5.6-terra`.
 
 O workflow tambem pode ser executado manualmente na aba **Actions**. A automacao agendada so comeca a funcionar depois de estar na branch padrao do repositorio.
 
@@ -112,7 +115,8 @@ configuracao nao geram um novo aviso retroativo.
 
 ## Sugestao de resposta por IA
 
-Quando `OPENAI_API_KEY` esta configurada, a sincronizacao gera uma resposta apenas
+Quando `ENABLE_AI_SUGGESTIONS=true` e `OPENAI_API_KEY` esta configurada, a
+sincronizacao gera uma resposta apenas
 para tarefas pendentes cuja coluna `Sugestão de resposta` ainda esteja vazia. O
 prompt assume um estudante de Sistemas de Informacao no 7o periodo e pede texto
 natural, claro e com menos jargao. A resposta e um rascunho para revisao, nao uma
