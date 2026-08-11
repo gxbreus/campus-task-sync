@@ -1,0 +1,13 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Campus Virtual//Moodle//PT
+BEGIN:VEVENT
+UID:atividade-123@campusvirtual.ufla.br
+DTSTAMP:20260811T120000Z
+DTSTART:20260820T235900Z
+DTEND:20260821T000000Z
+SUMMARY:Entrega da atividade 1
+DESCRIPTION:Leia o enunciado e envie o trabalho.\\nhttps://campusvirtual.ufla.br/mod/assign/view.php?id=123
+CATEGORIES:GCC220-2026/2--10A-14A-G010-G014
+END:VEVENT
+END:VCALENDAR
