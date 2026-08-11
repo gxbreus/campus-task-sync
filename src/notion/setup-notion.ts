@@ -140,6 +140,7 @@ export async function setupNotion(
             Nome: { title: {} },
             Concluida: { checkbox: {} },
             Abertura: { date: {} },
+            "Informação da abertura": { rich_text: {} },
             Prazo: { date: {} },
             Alerta: {
               select: {
@@ -157,6 +158,7 @@ export async function setupNotion(
             Responsavel: { people: {} },
             Disciplina: { select: { options: courseOptions } },
             Descricao: { rich_text: {} },
+            "Sugestão de resposta": { rich_text: {} },
             Link: { url: {} },
             "ID externo": { rich_text: {} },
             Origem: {
@@ -232,8 +234,29 @@ export async function setupNotion(
 
   let dataSourceDetails = await request(`/data_sources/${dataSourceId}`);
   let properties = objectValue(dataSourceDetails.properties);
+  const renamedProperties: JsonObject = {};
+  if (properties?.["Informacao da abertura"] && !properties?.["Informação da abertura"]) {
+    renamedProperties["Informacao da abertura"] = { name: "Informação da abertura" };
+  }
+  if (properties?.["Sugestao de resposta"] && !properties?.["Sugestão de resposta"]) {
+    renamedProperties["Sugestao de resposta"] = { name: "Sugestão de resposta" };
+  }
+  if (Object.keys(renamedProperties).length > 0) {
+    await request(`/data_sources/${dataSourceId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ properties: renamedProperties }),
+    });
+    dataSourceDetails = await request(`/data_sources/${dataSourceId}`);
+    properties = objectValue(dataSourceDetails.properties);
+  }
   const missingProperties: JsonObject = {};
   if (!properties?.Abertura) missingProperties.Abertura = { date: {} };
+  if (!properties?.["Informação da abertura"]) {
+    missingProperties["Informação da abertura"] = { rich_text: {} };
+  }
+  if (!properties?.["Sugestão de resposta"]) {
+    missingProperties["Sugestão de resposta"] = { rich_text: {} };
+  }
   if (!properties?.Responsavel) missingProperties.Responsavel = { people: {} };
   if (!properties?.Alerta) {
     missingProperties.Alerta = {
@@ -264,14 +287,57 @@ export async function setupNotion(
 
   const viewList = await request(`/views?database_id=${encodeURIComponent(databaseId)}`);
   const existingViewNames = new Set<string>();
+  const existingViews: JsonObject[] = [];
   for (const item of arrayValue(viewList.results)) {
     const listedView = objectValue(item);
     if (typeof listedView?.name === "string") {
       existingViewNames.add(listedView.name);
+      existingViews.push(listedView);
     } else if (typeof listedView?.id === "string") {
       const view = await request(`/views/${listedView.id}`);
       if (typeof view.name === "string") existingViewNames.add(view.name);
+      existingViews.push(view);
     }
+  }
+
+  const propertyId = (name: string): string | undefined => {
+    const id = objectValue(properties?.[name])?.id;
+    return typeof id === "string" ? decodeURIComponent(id) : undefined;
+  };
+  const tableView = existingViews.find((view) => view.type === "table");
+  if (typeof tableView?.id === "string") {
+    const visibleColumns = [
+      ["Disciplina", 220],
+      ["Nome", 360],
+      ["Abertura", 170],
+      ["Informação da abertura", 260],
+      ["Prazo", 170],
+      ["Alerta", 190],
+      ["Concluida", 120],
+      ["Link", 140],
+      ["Descricao", 380],
+      ["Sugestão de resposta", 500],
+    ] as const;
+    const hiddenColumns = ["Responsavel", "ID externo", "Origem", "Sincronizado em", "Situacao"];
+    await request(`/views/${tableView.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        configuration: {
+          type: "table",
+          properties: [
+            ...visibleColumns.flatMap(([name, width]) => {
+              const id = propertyId(name);
+              return id ? [{ property_id: id, visible: true, width }] : [];
+            }),
+            ...hiddenColumns.flatMap((name) => {
+              const id = propertyId(name);
+              return id ? [{ property_id: id, visible: false }] : [];
+            }),
+          ],
+          frozen_column_index: 0,
+        },
+      }),
+    });
   }
 
   const createView = async (

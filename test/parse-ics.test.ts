@@ -13,9 +13,11 @@ test("converte um evento do Moodle em tarefa", async () => {
       title: "Entrega da atividade 1",
       description:
         "Leia o enunciado e envie o trabalho.\nhttps://campusvirtual.ufla.br/mod/assign/view.php?id=123",
-      course: "GCC220",
+      course: "Metodologia de Pesquisa",
+      courseCode: "GCC220",
       sourceUrl: "https://campusvirtual.ufla.br/mod/assign/view.php?id=123",
       dueAt: "2026-08-20T23:59:00.000Z",
+      openingInformation: "Data não informada pelo calendário do Campus",
     },
   ]);
 });
@@ -46,11 +48,34 @@ END:VCALENDAR`;
     externalId: tasks[0]?.externalId,
     title: "Escolha o artigo clicando aqui",
     description: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
-    course: "GCC220",
+    course: "Metodologia de Pesquisa",
+    courseCode: "GCC220",
     sourceUrl: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
     opensAt: "2026-08-10T23:19:00.000Z",
     dueAt: "2026-08-17T02:59:00.000Z",
+    openingInformation: "Data de abertura informada pelo Campus",
   });
+});
+
+test("cria link para o evento do Campus quando o ICS nao fornece URL", () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:347608@campusvirtual.ufla.br/presencial
+DTSTART:20260819T020000Z
+SUMMARY:Tarefa 1 está marcado(a) para esta data
+DESCRIPTION:Leia o capitulo e responda.
+CATEGORIES:GCC128-2026/2
+END:VEVENT
+END:VCALENDAR`;
+
+  const [task] = parseCalendar(ics, { campusBaseUrl: "https://campusvirtual.ufla.br" });
+  assert.equal(task?.course, "Inteligência Artificial");
+  assert.equal(task?.title, "Tarefa 1");
+  assert.equal(
+    task?.sourceUrl,
+    "https://campusvirtual.ufla.br/calendar/view.php?view=day&time=1787104800#event_347608",
+  );
 });
 
 test("aceita calendario vazio", () => {

@@ -6,6 +6,8 @@ export type AppConfig = BaseConfig & {
   notionToken: string;
   notionDataSourceId: string;
   notionAssigneeUserId?: string;
+  openAiApiKey?: string;
+  openAiModel: string;
 };
 
 export type NotionSetupConfig = BaseConfig & {
@@ -30,6 +32,8 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     notionToken: required("NOTION_TOKEN", env),
     notionDataSourceId: required("NOTION_DATA_SOURCE_ID", env),
     notionAssigneeUserId: env.NOTION_ASSIGNEE_USER_ID?.trim() || undefined,
+    openAiApiKey: env.OPENAI_API_KEY?.trim() || undefined,
+    openAiModel: env.OPENAI_MODEL?.trim() || "gpt-5.6-terra",
   };
 }
 

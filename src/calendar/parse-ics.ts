@@ -3,10 +3,14 @@ import { createHash } from "node:crypto";
 import ICAL from "ical.js";
 
 import type { CampusTask } from "../domain/task.js";
+import { courseNameFromCode } from "./course-names.js";
 
 type EventPhase = "opening" | "closing" | "single";
 
-type CalendarEvent = Omit<CampusTask, "externalId" | "opensAt" | "dueAt"> & {
+type CalendarEvent = Omit<
+  CampusTask,
+  "externalId" | "opensAt" | "dueAt" | "openingInformation"
+> & {
   externalId: string;
   occurredAt: string;
   phase: EventPhase;
@@ -18,15 +22,31 @@ function cleanText(value: string | null | undefined): string | undefined {
   return cleaned || undefined;
 }
 
-function eventUrl(component: ICAL.Component, description?: string): string | undefined {
+function cleanEventTitle(value: string): string {
+  return value.replace(/\s+est[aá]\s+marcado\(a\)\s+para\s+esta\s+data\s*$/i, "").trim();
+}
+
+function eventUrl(
+  component: ICAL.Component,
+  externalId: string,
+  occurredAt: string,
+  campusBaseUrl?: string,
+  description?: string,
+): string | undefined {
   const rawUrl = component.getFirstPropertyValue("url");
   const explicitUrl = typeof rawUrl === "string" ? cleanText(rawUrl) : undefined;
   if (explicitUrl) return explicitUrl;
 
-  return description?.match(/https?:\/\/[^\s<>"']+/)?.[0];
+  const descriptionUrl = description?.match(/https?:\/\/[^\s<>"']+/)?.[0];
+  if (descriptionUrl) return descriptionUrl;
+
+  const eventId = externalId.match(/^(\d+)@/)?.[1];
+  if (!campusBaseUrl || !eventId) return undefined;
+  const time = Math.floor(new Date(occurredAt).getTime() / 1000);
+  return `${campusBaseUrl}/calendar/view.php?view=day&time=${time}#event_${eventId}`;
 }
 
-function courseName(component: ICAL.Component): string | undefined {
+function courseDetails(component: ICAL.Component): { code?: string; name?: string } {
   const categories = component.getFirstPropertyValue("categories");
   const value = Array.isArray(categories)
     ? cleanText(categories.join(", "))
@@ -34,7 +54,8 @@ function courseName(component: ICAL.Component): string | undefined {
       ? cleanText(categories)
       : undefined;
   const courseCode = value?.match(/^([A-Z]{2,}\d{3})/i)?.[1];
-  return courseCode?.toUpperCase() ?? value;
+  const code = courseCode?.toUpperCase();
+  return code ? { code, name: courseNameFromCode(code) } : { name: value };
 }
 
 function eventPhase(title: string): { phase: EventPhase; baseTitle: string } {
@@ -53,7 +74,7 @@ function eventPhase(title: string): { phase: EventPhase; baseTitle: string } {
 }
 
 function groupedExternalId(event: CalendarEvent): string {
-  const identity = `${event.course ?? ""}\n${event.baseTitle.toLocaleLowerCase("pt-BR")}`;
+  const identity = `${event.courseCode ?? event.course ?? ""}\n${event.baseTitle.toLocaleLowerCase("pt-BR")}`;
   return `campus-group-${createHash("sha256").update(identity).digest("hex").slice(0, 32)}`;
 }
 
@@ -68,8 +89,10 @@ function consolidateEvents(events: CalendarEvent[]): CampusTask[] {
         title: event.title,
         description: event.description,
         course: event.course,
+        courseCode: event.courseCode,
         sourceUrl: event.sourceUrl,
         dueAt: event.occurredAt,
+        openingInformation: "Data não informada pelo calendário do Campus",
       });
       continue;
     }
@@ -93,9 +116,13 @@ function consolidateEvents(events: CalendarEvent[]): CampusTask[] {
       title: reference.baseTitle,
       description: closing?.description ?? opening?.description,
       course: reference.course,
+      courseCode: reference.courseCode,
       sourceUrl: closing?.sourceUrl ?? opening?.sourceUrl,
       ...(opening ? { opensAt: opening.occurredAt } : {}),
       ...(closing ? { dueAt: closing.occurredAt } : {}),
+      openingInformation: opening
+        ? "Data de abertura informada pelo Campus"
+        : "Data não informada pelo calendário do Campus",
     });
   }
 
@@ -104,7 +131,10 @@ function consolidateEvents(events: CalendarEvent[]): CampusTask[] {
   );
 }
 
-export function parseCalendar(ics: string): CampusTask[] {
+export function parseCalendar(
+  ics: string,
+  options: { campusBaseUrl?: string } = {},
+): CampusTask[] {
   const root = new ICAL.Component(ICAL.parse(ics));
   const events = root.getAllSubcomponents("vevent");
 
@@ -112,12 +142,15 @@ export function parseCalendar(ics: string): CampusTask[] {
     .map((component): CalendarEvent | null => {
       const event = new ICAL.Event(component);
       const externalId = cleanText(event.uid);
-      const title = cleanText(event.summary);
+      const rawTitle = cleanText(event.summary);
 
-      if (!externalId || !title || !event.startDate) return null;
+      if (!externalId || !rawTitle || !event.startDate) return null;
 
+      const title = cleanEventTitle(rawTitle);
       const description = cleanText(event.description);
       const { phase, baseTitle } = eventPhase(title);
+      const occurredAt = event.startDate.toJSDate().toISOString();
+      const course = courseDetails(component);
 
       return {
         externalId,
@@ -125,9 +158,16 @@ export function parseCalendar(ics: string): CampusTask[] {
         baseTitle,
         phase,
         description,
-        course: courseName(component),
-        sourceUrl: eventUrl(component, description),
-        occurredAt: event.startDate.toJSDate().toISOString(),
+        course: course.name,
+        courseCode: course.code,
+        sourceUrl: eventUrl(
+          component,
+          externalId,
+          occurredAt,
+          options.campusBaseUrl,
+          description,
+        ),
+        occurredAt,
       };
     })
     .filter((event): event is CalendarEvent => event !== null);

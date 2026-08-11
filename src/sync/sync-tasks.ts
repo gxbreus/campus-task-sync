@@ -32,7 +32,7 @@ export async function syncTasks(
       continue;
     }
 
-    await destination.update(managed.destinationId, task, managed.status);
+    await destination.update(managed.destinationId, task, managed);
     result.updated += 1;
   }
 
