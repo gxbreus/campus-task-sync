@@ -33,11 +33,23 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
         properties: {
           Disciplina: { id: "course-property" },
           Prazo: { id: "deadline-property" },
+          Nome: { id: "title" },
+          Abertura: { id: "opening-property" },
+          "Informação da abertura": { id: "opening-info-property" },
+          Alerta: { id: "alert-property" },
+          Concluida: { id: "done-property" },
+          Link: { id: "link-property" },
+          Descricao: { id: "description-property" },
+          "Sugestão de resposta": { id: "answer-property" },
+          Responsavel: { id: "assignee-property" },
         },
       });
     }
     if (url.includes("/views?database_id=")) {
-      return Response.json({ results: [] });
+      return Response.json({ results: [{ id: "default-view" }] });
+    }
+    if (url.endsWith("/views/default-view") && init.method !== "PATCH") {
+      return Response.json({ id: "default-view", name: "Default view", type: "table" });
     }
     if (url.includes("/users?page_size=")) {
       return Response.json({ results: [{ id: "user-1", type: "person" }] });
@@ -71,8 +83,18 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
   const properties = initialDataSource.properties as Record<string, unknown>;
   assert.deepEqual(properties.Concluida, { checkbox: {} });
   assert.deepEqual(properties.Abertura, { date: {} });
+  assert.deepEqual(properties["Informação da abertura"], { rich_text: {} });
+  assert.deepEqual(properties["Sugestão de resposta"], { rich_text: {} });
   assert.ok("select" in (properties.Alerta as Record<string, unknown>));
   assert.deepEqual(properties.Responsavel, { people: {} });
+
+  const updateDefaultView = requests.find(
+    (request) => request.url.endsWith("/views/default-view") && request.method === "PATCH",
+  );
+  const configuration = updateDefaultView?.body?.configuration as Record<string, unknown>;
+  const columns = configuration.properties as Array<Record<string, unknown>>;
+  assert.equal(columns[0]?.property_id, "course-property");
+  assert.equal(columns.filter((column) => column.visible === true).at(-1)?.property_id, "answer-property");
   assert.deepEqual(properties.Disciplina, {
     select: {
       options: [

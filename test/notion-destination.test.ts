@@ -49,7 +49,12 @@ test("lista apenas tarefas gerenciadas e interpreta a situacao", async () => {
   });
 
   assert.deepEqual(await destination.listManagedTasks(), [
-    { destinationId: "page-1", externalId: "evento-1", status: "completed" },
+    {
+      destinationId: "page-1",
+      externalId: "evento-1",
+      status: "completed",
+      hasSuggestedAnswer: false,
+    },
   ]);
   assert.equal(requests[0]?.url, "https://api.notion.com/v1/data_sources/source-1/query");
   assert.match(String(requests[0]?.init?.body), /Campus Virtual/);
@@ -65,6 +70,7 @@ test("cria uma pagina com identificador externo e prazo", async () => {
     token: "test-token",
     dataSourceId: "source-1",
     assigneeUserId: "user-1",
+    answerGenerator: async () => "Resposta sugerida para revisar.",
     fetcher,
     now: () => new Date("2026-08-11T12:00:00.000Z"),
   });
@@ -74,7 +80,9 @@ test("cria uma pagina com identificador externo e prazo", async () => {
     title: "Trabalho",
     opensAt: "2026-08-15T12:00:00.000Z",
     dueAt: "2026-08-20T23:59:00.000Z",
-    course: "GCC220",
+    course: "Metodologia de Pesquisa",
+    courseCode: "GCC220",
+    openingInformation: "Data de abertura informada pelo Campus",
   });
 
   assert.deepEqual(body?.parent, {
@@ -87,9 +95,22 @@ test("cria uma pagina com identificador externo e prazo", async () => {
   });
   assert.deepEqual(properties.Situacao, { select: { name: "Pendente" } });
   assert.deepEqual(properties.Concluida, { checkbox: false });
-  assert.deepEqual(properties.Disciplina, { select: { name: "GCC220" } });
+  assert.deepEqual(properties.Nome, {
+    title: [{ text: { content: "Metodologia de Pesquisa — Trabalho" } }],
+  });
+  assert.deepEqual(properties.Disciplina, { select: { name: "Metodologia de Pesquisa" } });
   assert.deepEqual(properties.Abertura, { date: { start: "2026-08-15T12:00:00.000Z" } });
   assert.deepEqual(properties.Prazo, { date: { start: "2026-08-20T23:59:00.000Z" } });
   assert.deepEqual(properties.Alerta, { select: { name: "🟢 No prazo" } });
   assert.deepEqual(properties.Responsavel, { people: [{ id: "user-1" }] });
+  assert.deepEqual(properties["Informação da abertura"], {
+    rich_text: [
+      { type: "text", text: { content: "Data de abertura informada pelo Campus" } },
+    ],
+  });
+  assert.deepEqual(properties["Sugestão de resposta"], {
+    rich_text: [
+      { type: "text", text: { content: "Resposta sugerida para revisar." } },
+    ],
+  });
 });

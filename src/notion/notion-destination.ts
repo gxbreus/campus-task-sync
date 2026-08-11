@@ -4,6 +4,7 @@ import type {
   ManagedTaskStatus,
   TaskDestination,
 } from "../domain/task.js";
+import type { AnswerGenerator } from "../ai/generate-answer.js";
 
 const NOTION_API_VERSION = "2026-03-11";
 const SOURCE_NAME = "Campus Virtual";
@@ -12,6 +13,7 @@ type NotionDestinationOptions = {
   token: string;
   dataSourceId: string;
   assigneeUserId?: string;
+  answerGenerator?: AnswerGenerator;
   fetcher?: typeof fetch;
   now?: () => Date;
 };
@@ -31,6 +33,14 @@ function propertyText(property: unknown): string | undefined {
   const richText = arrayValue(object?.rich_text);
   const first = objectValue(richText[0]);
   return typeof first?.plain_text === "string" ? first.plain_text : undefined;
+}
+
+function richTextValue(value: string): JsonObject[] {
+  const chunks: JsonObject[] = [];
+  for (let index = 0; index < value.length; index += 1900) {
+    chunks.push({ type: "text", text: { content: value.slice(index, index + 1900) } });
+  }
+  return chunks;
 }
 
 function propertySelect(property: unknown): string | undefined {
@@ -69,11 +79,23 @@ function taskProperties(
   task: CampusTask,
   syncedAt: string,
   status: ManagedTaskStatus,
+  suggestedAnswer?: string,
 ): JsonObject {
   const now = new Date(syncedAt);
   return {
-    Nome: { title: [{ text: { content: task.title } }] },
+    Nome: {
+      title: [
+        {
+          text: {
+            content: task.course ? `${task.course} — ${task.title}` : task.title,
+          },
+        },
+      ],
+    },
     Abertura: { date: task.opensAt ? { start: task.opensAt } : null },
+    "Informação da abertura": {
+      rich_text: [{ type: "text", text: { content: task.openingInformation } }],
+    },
     Prazo: { date: task.dueAt ? { start: task.dueAt } : null },
     Alerta: { select: { name: deadlineAlert(task, now, status) } },
     Disciplina: {
@@ -86,6 +108,9 @@ function taskProperties(
     "ID externo": { rich_text: [{ text: { content: task.externalId } }] },
     Origem: { select: { name: SOURCE_NAME } },
     "Sincronizado em": { date: { start: syncedAt } },
+    ...(suggestedAnswer
+      ? { "Sugestão de resposta": { rich_text: richTextValue(suggestedAnswer) } }
+      : {}),
   };
 }
 
@@ -96,6 +121,17 @@ export class NotionDestination implements TaskDestination {
   constructor(private readonly options: NotionDestinationOptions) {
     this.fetcher = options.fetcher ?? fetch;
     this.now = options.now ?? (() => new Date());
+  }
+
+  private async generateSuggestedAnswer(task: CampusTask): Promise<string | undefined> {
+    if (!this.options.answerGenerator) return undefined;
+    try {
+      return await this.options.answerGenerator(task);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "erro desconhecido";
+      console.error(`Sugestao de resposta adiada para ${task.externalId}: ${message}`);
+      return undefined;
+    }
   }
 
   private async request(path: string, init: RequestInit): Promise<JsonObject> {
@@ -145,6 +181,7 @@ export class NotionDestination implements TaskDestination {
               propertyCheckbox(properties?.Concluida),
               propertySelect(properties?.Situacao),
             ),
+            hasSuggestedAnswer: Boolean(propertyText(properties?.["Sugestão de resposta"])),
           });
         }
       }
@@ -157,12 +194,13 @@ export class NotionDestination implements TaskDestination {
 
   async create(task: CampusTask): Promise<void> {
     const syncedAt = this.now().toISOString();
+    const suggestedAnswer = await this.generateSuggestedAnswer(task);
     await this.request("/pages", {
       method: "POST",
       body: JSON.stringify({
         parent: { type: "data_source_id", data_source_id: this.options.dataSourceId },
         properties: {
-          ...taskProperties(task, syncedAt, "pending"),
+          ...taskProperties(task, syncedAt, "pending", suggestedAnswer),
           ...(this.options.assigneeUserId
             ? { Responsavel: { people: [{ id: this.options.assigneeUserId }] } }
             : {}),
@@ -176,15 +214,19 @@ export class NotionDestination implements TaskDestination {
   async update(
     destinationId: string,
     task: CampusTask,
-    currentStatus: ManagedTaskStatus,
+    current: ManagedTask,
   ): Promise<void> {
     const syncedAt = this.now().toISOString();
+    const suggestedAnswer =
+      current.status === "pending" && !current.hasSuggestedAnswer
+        ? await this.generateSuggestedAnswer(task)
+        : undefined;
     await this.request(`/pages/${destinationId}`, {
       method: "PATCH",
       body: JSON.stringify({
         properties: {
-          ...taskProperties(task, syncedAt, currentStatus),
-          ...(currentStatus === "cancelled"
+          ...taskProperties(task, syncedAt, current.status, suggestedAnswer),
+          ...(current.status === "cancelled"
             ? { Situacao: { select: { name: "Pendente" } } }
             : {}),
         },
