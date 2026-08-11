@@ -14,5 +14,10 @@ export async function fetchCalendar(
     throw new Error(`Falha ao consultar o calendario do Campus (HTTP ${response.status}).`);
   }
 
-  return parseCalendar(await response.text());
+  const parsedUrl = new URL(calendarUrl);
+  const calendarPathIndex = parsedUrl.pathname.indexOf("/calendar/");
+  const campusPath = calendarPathIndex >= 0 ? parsedUrl.pathname.slice(0, calendarPathIndex) : "";
+  return parseCalendar(await response.text(), {
+    campusBaseUrl: `${parsedUrl.origin}${campusPath}`,
+  });
 }

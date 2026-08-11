@@ -3,6 +3,7 @@ import "dotenv/config";
 import { fetchCalendar } from "./calendar/fetch-calendar.js";
 import { loadAppConfig, loadCalendarConfig } from "./config.js";
 import { NotionDestination } from "./notion/notion-destination.js";
+import { createOpenAiAnswerGenerator } from "./ai/generate-answer.js";
 import { syncTasks } from "./sync/sync-tasks.js";
 
 const dryRun = process.argv.includes("--dry-run");
@@ -21,6 +22,12 @@ async function main(): Promise<void> {
     token: config.notionToken,
     dataSourceId: config.notionDataSourceId,
     assigneeUserId: config.notionAssigneeUserId,
+    answerGenerator: config.openAiApiKey
+      ? createOpenAiAnswerGenerator({
+          apiKey: config.openAiApiKey,
+          model: config.openAiModel,
+        })
+      : undefined,
   });
   const result = await syncTasks(tasks, destination);
 

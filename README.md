@@ -15,6 +15,9 @@ O MVP ja possui:
 - consolidacao de eventos de abertura e encerramento em uma unica tarefa;
 - alerta colorido conforme a proximidade do fechamento;
 - atribuicao de novas tarefas ao usuario para notificacoes do Notion;
+- nomes completos das disciplinas e titulo contextual nas notificacoes;
+- link clicavel para o evento correspondente no calendario do Campus;
+- sugestao de resposta opcional pela OpenAI, com pesquisa web e leitura de anexos acessiveis;
 - preservacao de tarefas marcadas manualmente como concluidas;
 - modo local de validacao sem acesso ao Notion;
 - execucao automatica a cada 30 minutos pelo GitHub Actions.
@@ -34,11 +37,13 @@ O comando de configuracao cria automaticamente uma base com estas propriedades:
 | `Nome` | Titulo | — |
 | `Concluida` | Checkbox | — |
 | `Abertura` | Data | inicio da disponibilidade da atividade |
+| `Informação da abertura` | Texto | informa quando o calendario nao fornece a data |
 | `Prazo` | Data | — |
 | `Alerta` | Selecao colorida | proximidade do fechamento |
 | `Responsavel` | Pessoa | recebe notificacao quando uma nova tarefa e atribuida |
 | `Disciplina` | Selecao colorida | uma opcao por disciplina |
 | `Descricao` | Texto | — |
+| `Sugestão de resposta` | Texto | rascunho gerado para revisao do estudante |
 | `Link` | URL | — |
 | `ID externo` | Texto | — |
 | `Origem` | Selecao | `Campus Virtual` |
@@ -84,6 +89,10 @@ Cadastre estes *Actions secrets* no repositorio:
 - `NOTION_TOKEN`
 - `NOTION_DATA_SOURCE_ID`
 - `NOTION_ASSIGNEE_USER_ID`
+- `OPENAI_API_KEY` (opcional, necessario para gerar respostas)
+
+Cadastre `OPENAI_MODEL` como *Actions variable*. O valor padrao recomendado para
+este projeto e `gpt-5.6-terra`.
 
 O workflow tambem pode ser executado manualmente na aba **Actions**. A automacao agendada so comeca a funcionar depois de estar na branch padrao do repositorio.
 
@@ -91,6 +100,18 @@ Novas tarefas sao atribuidas ao usuario definido em `NOTION_ASSIGNEE_USER_ID`.
 No aplicativo do Notion, habilite as notificacoes em **Configuracoes → Minhas
 notificacoes → Notificacoes push no celular**. Tarefas que ja existiam antes da
 configuracao nao geram um novo aviso retroativo.
+
+## Sugestao de resposta por IA
+
+Quando `OPENAI_API_KEY` esta configurada, a sincronizacao gera uma resposta apenas
+para tarefas pendentes cuja coluna `Sugestão de resposta` ainda esteja vazia. O
+prompt assume um estudante de Sistemas de Informacao no 7o periodo e pede texto
+natural, claro e com menos jargao. A resposta e um rascunho para revisao, nao uma
+entrega automatica.
+
+A IA pode pesquisar na web e recebe anexos cujos links publicos estejam presentes
+no calendario. Se o enunciado mencionar um anexo que o arquivo ICS nao disponibiliza,
+o sistema orienta o modelo a declarar a limitacao em vez de inventar o conteudo.
 
 ## Desenvolvimento
 

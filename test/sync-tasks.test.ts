@@ -4,7 +4,6 @@ import test from "node:test";
 import type {
   CampusTask,
   ManagedTask,
-  ManagedTaskStatus,
   TaskDestination,
 } from "../src/domain/task.js";
 import { syncTasks } from "../src/sync/sync-tasks.js";
@@ -25,7 +24,7 @@ class FakeDestination implements TaskDestination {
   async update(
     destinationId: string,
     task: CampusTask,
-    _currentStatus: ManagedTaskStatus,
+    _current: ManagedTask,
   ): Promise<void> {
     this.calls.push(`update:${destinationId}:${task.externalId}`);
   }
@@ -39,13 +38,14 @@ const task = (externalId: string): CampusTask => ({
   externalId,
   title: externalId,
   dueAt: "2026-08-20T23:59:00.000Z",
+  openingInformation: "Data não informada pelo calendário do Campus",
 });
 
 test("cria, atualiza e cancela tarefas de forma idempotente", async () => {
   const destination = new FakeDestination([
-    { destinationId: "page-b", externalId: "b", status: "completed" },
-    { destinationId: "page-c", externalId: "c", status: "pending" },
-    { destinationId: "page-d", externalId: "d", status: "cancelled" },
+    { destinationId: "page-b", externalId: "b", status: "completed", hasSuggestedAnswer: true },
+    { destinationId: "page-c", externalId: "c", status: "pending", hasSuggestedAnswer: false },
+    { destinationId: "page-d", externalId: "d", status: "cancelled", hasSuggestedAnswer: false },
   ]);
 
   const result = await syncTasks([task("a"), task("b")], destination);
