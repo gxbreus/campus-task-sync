@@ -1,5 +1,6 @@
 type BaseConfig = {
   calendarUrl: string;
+  moodleToken?: string;
 };
 
 export type AppConfig = BaseConfig & {
@@ -8,6 +9,7 @@ export type AppConfig = BaseConfig & {
   notionAssigneeUserId?: string;
   openAiApiKey?: string;
   openAiModel: string;
+  openAiSuggestionsEnabled: boolean;
 };
 
 export type NotionSetupConfig = BaseConfig & {
@@ -23,7 +25,10 @@ function required(name: string, env: NodeJS.ProcessEnv): string {
 }
 
 export function loadCalendarConfig(env: NodeJS.ProcessEnv = process.env): BaseConfig {
-  return { calendarUrl: required("CALENDAR_ICS_URL", env) };
+  return {
+    calendarUrl: required("CALENDAR_ICS_URL", env),
+    moodleToken: env.MOODLE_TOKEN?.trim() || undefined,
+  };
 }
 
 export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -34,6 +39,9 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     notionAssigneeUserId: env.NOTION_ASSIGNEE_USER_ID?.trim() || undefined,
     openAiApiKey: env.OPENAI_API_KEY?.trim() || undefined,
     openAiModel: env.OPENAI_MODEL?.trim() || "gpt-5.6-terra",
+    openAiSuggestionsEnabled: /^(1|true|yes)$/i.test(
+      env.ENABLE_AI_SUGGESTIONS?.trim() ?? "",
+    ),
   };
 }
 

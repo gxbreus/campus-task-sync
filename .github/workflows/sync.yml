@@ -25,5 +25,7 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
           NOTION_ASSIGNEE_USER_ID: ${{ secrets.NOTION_ASSIGNEE_USER_ID }}
+          MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          ENABLE_AI_SUGGESTIONS: ${{ vars.ENABLE_AI_SUGGESTIONS }}
