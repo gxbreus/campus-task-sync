@@ -1,0 +1,116 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { parseNotionPageId, setupNotion } from "../src/notion/setup-notion.js";
+
+test("extrai o ID no fim de uma URL cujo titulo contem letras hexadecimais", () => {
+  assert.equal(
+    parseNotionPageId(
+      "https://www.notion.so/Campus-Task-Sync-0123456789abcdef0123456789abcdef",
+    ),
+    "0123456789abcdef0123456789abcdef",
+  );
+});
+
+test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
+  const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+  let savedId: string | undefined;
+  const fetcher: typeof fetch = async (input, init = {}) => {
+    const url = String(input);
+    const body = init.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined;
+    requests.push({ url, method: init.method ?? "GET", body });
+
+    if (url.endsWith("/databases") && init.method === "POST") {
+      return Response.json({ id: "database-1" });
+    }
+    if (url.endsWith("/databases/database-1")) {
+      return Response.json({ data_sources: [{ id: "source-1" }] });
+    }
+    if (url.endsWith("/data_sources/source-1")) {
+      return Response.json({
+        parent: { database_id: "database-1" },
+        properties: {
+          Disciplina: { id: "course-property" },
+          Prazo: { id: "deadline-property" },
+        },
+      });
+    }
+    if (url.includes("/views?database_id=")) {
+      return Response.json({ results: [] });
+    }
+    return Response.json({ id: "ok" });
+  };
+
+  const result = await setupNotion({
+    token: "test-token",
+    parentPageUrl:
+      "https://www.notion.so/Campus-Task-Sync-0123456789abcdef0123456789abcdef",
+    courses: ["GCC220", "GCC220", "GCC101"],
+    fetcher,
+    saveDataSourceId: async (id) => {
+      savedId = id;
+    },
+  });
+
+  assert.equal(savedId, "source-1");
+  assert.equal(result.created, true);
+  assert.deepEqual(result.viewsCreated, ["Por disciplina", "Calendario", "Pendentes"]);
+
+  const createDatabase = requests.find(
+    (request) => request.url.endsWith("/databases") && request.method === "POST",
+  );
+  const initialDataSource = createDatabase?.body?.initial_data_source as Record<string, unknown>;
+  const properties = initialDataSource.properties as Record<string, unknown>;
+  assert.deepEqual(properties.Concluida, { checkbox: {} });
+  assert.deepEqual(properties.Disciplina, {
+    select: {
+      options: [
+        { name: "GCC101", color: "blue" },
+        { name: "GCC220", color: "green" },
+      ],
+    },
+  });
+});
+
+test("retoma uma configuracao parcial sem duplicar a base ou as visualizacoes", async () => {
+  const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+  const fetcher: typeof fetch = async (input, init = {}) => {
+    const url = String(input);
+    const body = init.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined;
+    requests.push({ url, method: init.method ?? "GET", body });
+
+    if (url.endsWith("/data_sources/source-1")) {
+      return Response.json({
+        parent: { database_id: "database-1" },
+        properties: {
+          Disciplina: { id: "course-property" },
+          Prazo: { id: "deadline-property" },
+        },
+      });
+    }
+    if (url.includes("/views?database_id=")) {
+      return Response.json({ results: [{ id: "existing-view" }] });
+    }
+    if (url.endsWith("/views/existing-view")) {
+      return Response.json({ id: "existing-view", name: "Por disciplina" });
+    }
+    return Response.json({ id: "ok" });
+  };
+
+  const result = await setupNotion({
+    token: "test-token",
+    parentPageUrl:
+      "https://www.notion.so/Campus-Task-Sync-0123456789abcdef0123456789abcdef",
+    courses: ["GCC220"],
+    existingDataSourceId: "source-1",
+    fetcher,
+  });
+
+  assert.equal(result.created, false);
+  assert.deepEqual(result.viewsCreated, ["Calendario", "Pendentes"]);
+  assert.equal(
+    requests.filter((request) => request.url.endsWith("/databases") && request.method === "POST")
+      .length,
+    0,
+  );
+});
