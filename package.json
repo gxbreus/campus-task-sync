@@ -9,6 +9,7 @@
     "check": "npm run typecheck && npm test",
     "start": "node dist/src/cli.js",
     "setup:notion": "tsx src/setup-notion-cli.ts",
+    "setup:moodle": "tsx src/setup-moodle-token-cli.ts",
     "sync": "tsx src/cli.ts",
     "sync:dry": "tsx src/cli.ts --dry-run",
     "test": "node --import tsx --test test/**/*.test.ts",
