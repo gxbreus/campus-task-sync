@@ -23,6 +23,7 @@ type SetupNotionOptions = {
   existingDataSourceId?: string;
   fetcher?: typeof fetch;
   saveDataSourceId?: (dataSourceId: string) => Promise<void>;
+  saveAssigneeUserId?: (userId: string) => Promise<void>;
 };
 
 export type NotionSetupResult = {
@@ -30,6 +31,7 @@ export type NotionSetupResult = {
   dataSourceId: string;
   created: boolean;
   viewsCreated: string[];
+  assigneeUserId?: string;
 };
 
 function objectValue(value: unknown): JsonObject | undefined {
@@ -53,12 +55,24 @@ export async function saveEnvDataSourceId(
   dataSourceId: string,
   envPath = ".env",
 ): Promise<void> {
+  await saveEnvValue("NOTION_DATA_SOURCE_ID", dataSourceId, envPath);
+}
+
+async function saveEnvValue(name: string, value: string, envPath = ".env"): Promise<void> {
   const current = await readFile(envPath, "utf8");
-  const line = `NOTION_DATA_SOURCE_ID=${dataSourceId}`;
-  const next = /^NOTION_DATA_SOURCE_ID=.*$/m.test(current)
-    ? current.replace(/^NOTION_DATA_SOURCE_ID=.*$/m, line)
+  const line = `${name}=${value}`;
+  const expression = new RegExp(`^${name}=.*$`, "m");
+  const next = expression.test(current)
+    ? current.replace(expression, line)
     : `${current.trimEnd()}\n${line}\n`;
   await writeFile(envPath, next, { encoding: "utf8", mode: 0o600 });
+}
+
+export async function saveEnvAssigneeUserId(
+  userId: string,
+  envPath = ".env",
+): Promise<void> {
+  await saveEnvValue("NOTION_ASSIGNEE_USER_ID", userId, envPath);
 }
 
 export async function setupNotion(
@@ -66,6 +80,7 @@ export async function setupNotion(
 ): Promise<NotionSetupResult> {
   const fetcher = options.fetcher ?? fetch;
   const saveDataSourceId = options.saveDataSourceId ?? saveEnvDataSourceId;
+  const saveAssigneeUserId = options.saveAssigneeUserId ?? saveEnvAssigneeUserId;
 
   const request = async (path: string, init: RequestInit = {}): Promise<JsonObject> => {
     const response = await fetcher(`https://api.notion.com/v1${path}`, {
@@ -124,7 +139,22 @@ export async function setupNotion(
           properties: {
             Nome: { title: {} },
             Concluida: { checkbox: {} },
+            Abertura: { date: {} },
             Prazo: { date: {} },
+            Alerta: {
+              select: {
+                options: [
+                  { name: "🔴 Vencida", color: "red" },
+                  { name: "🔴 Fecha em 24h", color: "red" },
+                  { name: "🟠 Fecha em 3 dias", color: "orange" },
+                  { name: "🟡 Fecha em 7 dias", color: "yellow" },
+                  { name: "🟢 No prazo", color: "green" },
+                  { name: "🔵 Sem fechamento", color: "blue" },
+                  { name: "✅ Concluida", color: "green" },
+                ],
+              },
+            },
+            Responsavel: { people: {} },
             Disciplina: { select: { options: courseOptions } },
             Descricao: { rich_text: {} },
             Link: { url: {} },
@@ -200,8 +230,34 @@ export async function setupNotion(
     });
   }
 
-  const dataSourceDetails = await request(`/data_sources/${dataSourceId}`);
-  const properties = objectValue(dataSourceDetails.properties);
+  let dataSourceDetails = await request(`/data_sources/${dataSourceId}`);
+  let properties = objectValue(dataSourceDetails.properties);
+  const missingProperties: JsonObject = {};
+  if (!properties?.Abertura) missingProperties.Abertura = { date: {} };
+  if (!properties?.Responsavel) missingProperties.Responsavel = { people: {} };
+  if (!properties?.Alerta) {
+    missingProperties.Alerta = {
+      select: {
+        options: [
+          { name: "🔴 Vencida", color: "red" },
+          { name: "🔴 Fecha em 24h", color: "red" },
+          { name: "🟠 Fecha em 3 dias", color: "orange" },
+          { name: "🟡 Fecha em 7 dias", color: "yellow" },
+          { name: "🟢 No prazo", color: "green" },
+          { name: "🔵 Sem fechamento", color: "blue" },
+          { name: "✅ Concluida", color: "green" },
+        ],
+      },
+    };
+  }
+  if (Object.keys(missingProperties).length > 0) {
+    await request(`/data_sources/${dataSourceId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ properties: missingProperties }),
+    });
+    dataSourceDetails = await request(`/data_sources/${dataSourceId}`);
+    properties = objectValue(dataSourceDetails.properties);
+  }
   const disciplineId = objectValue(properties?.Disciplina)?.id;
   const deadlineId = objectValue(properties?.Prazo)?.id;
   const viewsCreated: string[] = [];
@@ -267,5 +323,12 @@ export async function setupNotion(
     sorts: [{ property: "Prazo", direction: "ascending" }],
   });
 
-  return { databaseId, dataSourceId, created, viewsCreated };
+  const users = await request("/users?page_size=100");
+  const people = arrayValue(users.results)
+    .map(objectValue)
+    .filter((user): user is JsonObject => user?.type === "person" && typeof user.id === "string");
+  const assigneeUserId = people.length === 1 ? (people[0]?.id as string) : undefined;
+  if (assigneeUserId) await saveAssigneeUserId(assigneeUserId);
+
+  return { databaseId, dataSourceId, created, viewsCreated, assigneeUserId };
 }

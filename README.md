@@ -12,6 +12,9 @@ O MVP ja possui:
 - criacao, atualizacao e cancelamento no Notion;
 - configuracao automatica de uma base estilizada no Notion;
 - checkbox de conclusao e cores por disciplina;
+- consolidacao de eventos de abertura e encerramento em uma unica tarefa;
+- alerta colorido conforme a proximidade do fechamento;
+- atribuicao de novas tarefas ao usuario para notificacoes do Notion;
 - preservacao de tarefas marcadas manualmente como concluidas;
 - modo local de validacao sem acesso ao Notion;
 - execucao automatica a cada 30 minutos pelo GitHub Actions.
@@ -30,7 +33,10 @@ O comando de configuracao cria automaticamente uma base com estas propriedades:
 | --- | --- | --- |
 | `Nome` | Titulo | — |
 | `Concluida` | Checkbox | — |
+| `Abertura` | Data | inicio da disponibilidade da atividade |
 | `Prazo` | Data | — |
+| `Alerta` | Selecao colorida | proximidade do fechamento |
+| `Responsavel` | Pessoa | recebe notificacao quando uma nova tarefa e atribuida |
 | `Disciplina` | Selecao colorida | uma opcao por disciplina |
 | `Descricao` | Texto | — |
 | `Link` | URL | — |
@@ -77,8 +83,14 @@ Cadastre estes *Actions secrets* no repositorio:
 - `CALENDAR_ICS_URL`
 - `NOTION_TOKEN`
 - `NOTION_DATA_SOURCE_ID`
+- `NOTION_ASSIGNEE_USER_ID`
 
 O workflow tambem pode ser executado manualmente na aba **Actions**. A automacao agendada so comeca a funcionar depois de estar na branch padrao do repositorio.
+
+Novas tarefas sao atribuidas ao usuario definido em `NOTION_ASSIGNEE_USER_ID`.
+No aplicativo do Notion, habilite as notificacoes em **Configuracoes → Minhas
+notificacoes → Notificacoes push no celular**. Tarefas que ja existiam antes da
+configuracao nao geram um novo aviso retroativo.
 
 ## Desenvolvimento
 

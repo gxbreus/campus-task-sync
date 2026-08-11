@@ -11,6 +11,7 @@ const SOURCE_NAME = "Campus Virtual";
 type NotionDestinationOptions = {
   token: string;
   dataSourceId: string;
+  assigneeUserId?: string;
   fetcher?: typeof fetch;
   now?: () => Date;
 };
@@ -47,15 +48,34 @@ function statusFromNotion(completed: boolean, value?: string): ManagedTaskStatus
   return "pending";
 }
 
-function taskProperties(task: CampusTask, syncedAt: string): JsonObject {
+function deadlineAlert(
+  task: CampusTask,
+  now: Date,
+  status: ManagedTaskStatus,
+): string {
+  if (status === "completed") return "✅ Concluida";
+  if (!task.dueAt) return "🔵 Sem fechamento";
+
+  const remaining = new Date(task.dueAt).getTime() - now.getTime();
+  const day = 24 * 60 * 60 * 1000;
+  if (remaining < 0) return "🔴 Vencida";
+  if (remaining <= day) return "🔴 Fecha em 24h";
+  if (remaining <= 3 * day) return "🟠 Fecha em 3 dias";
+  if (remaining <= 7 * day) return "🟡 Fecha em 7 dias";
+  return "🟢 No prazo";
+}
+
+function taskProperties(
+  task: CampusTask,
+  syncedAt: string,
+  status: ManagedTaskStatus,
+): JsonObject {
+  const now = new Date(syncedAt);
   return {
     Nome: { title: [{ text: { content: task.title } }] },
-    Prazo: {
-      date: {
-        start: task.startsAt,
-        ...(task.endsAt ? { end: task.endsAt } : {}),
-      },
-    },
+    Abertura: { date: task.opensAt ? { start: task.opensAt } : null },
+    Prazo: { date: task.dueAt ? { start: task.dueAt } : null },
+    Alerta: { select: { name: deadlineAlert(task, now, status) } },
     Disciplina: {
       select: task.course ? { name: task.course } : null,
     },
@@ -112,6 +132,7 @@ export class NotionDestination implements TaskDestination {
 
       for (const result of arrayValue(body.results)) {
         const page = objectValue(result);
+        if (page?.in_trash === true) continue;
         const properties = objectValue(page?.properties);
         const destinationId = typeof page?.id === "string" ? page.id : undefined;
         const externalId = propertyText(properties?.["ID externo"]);
@@ -135,12 +156,16 @@ export class NotionDestination implements TaskDestination {
   }
 
   async create(task: CampusTask): Promise<void> {
+    const syncedAt = this.now().toISOString();
     await this.request("/pages", {
       method: "POST",
       body: JSON.stringify({
         parent: { type: "data_source_id", data_source_id: this.options.dataSourceId },
         properties: {
-          ...taskProperties(task, this.now().toISOString()),
+          ...taskProperties(task, syncedAt, "pending"),
+          ...(this.options.assigneeUserId
+            ? { Responsavel: { people: [{ id: this.options.assigneeUserId }] } }
+            : {}),
           Concluida: { checkbox: false },
           Situacao: { select: { name: "Pendente" } },
         },
@@ -153,11 +178,12 @@ export class NotionDestination implements TaskDestination {
     task: CampusTask,
     currentStatus: ManagedTaskStatus,
   ): Promise<void> {
+    const syncedAt = this.now().toISOString();
     await this.request(`/pages/${destinationId}`, {
       method: "PATCH",
       body: JSON.stringify({
         properties: {
-          ...taskProperties(task, this.now().toISOString()),
+          ...taskProperties(task, syncedAt, currentStatus),
           ...(currentStatus === "cancelled"
             ? { Situacao: { select: { name: "Pendente" } } }
             : {}),
@@ -170,10 +196,7 @@ export class NotionDestination implements TaskDestination {
     await this.request(`/pages/${destinationId}`, {
       method: "PATCH",
       body: JSON.stringify({
-        properties: {
-          Situacao: { select: { name: "Cancelada" } },
-          "Sincronizado em": { date: { start: this.now().toISOString() } },
-        },
+        in_trash: true,
       }),
     });
   }
