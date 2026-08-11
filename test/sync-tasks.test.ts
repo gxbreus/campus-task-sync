@@ -53,3 +53,32 @@ test("cria, atualiza e cancela tarefas de forma idempotente", async () => {
   assert.deepEqual(result, { created: 1, updated: 1, cancelled: 1 });
   assert.deepEqual(destination.calls, ["create:a", "update:page-b:b", "cancel:page-c"]);
 });
+
+test("reaproveita uma fase existente e remove somente a duplicata", async () => {
+  const destination = new FakeDestination([
+    {
+      destinationId: "page-opening",
+      externalId: "opening-event",
+      status: "completed",
+      hasSuggestedAnswer: false,
+    },
+    {
+      destinationId: "page-closing",
+      externalId: "closing-event",
+      status: "pending",
+      hasSuggestedAnswer: false,
+    },
+  ]);
+  const grouped = {
+    ...task("campus-group-1"),
+    legacyExternalIds: ["opening-event", "closing-event"],
+  };
+
+  const result = await syncTasks([grouped], destination);
+
+  assert.deepEqual(result, { created: 0, updated: 1, cancelled: 1 });
+  assert.deepEqual(destination.calls, [
+    "update:page-opening:campus-group-1",
+    "cancel:page-closing",
+  ]);
+});
