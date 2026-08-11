@@ -46,6 +46,7 @@ END:VCALENDAR`;
   assert.match(tasks[0]?.externalId ?? "", /^campus-group-/);
   assert.deepEqual(tasks[0], {
     externalId: tasks[0]?.externalId,
+    legacyExternalIds: ["abertura-1", "encerramento-1"],
     title: "Escolha o artigo clicando aqui",
     description: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
     course: "Metodologia de Pesquisa",
@@ -53,6 +54,37 @@ END:VCALENDAR`;
     sourceUrl: "https://campusvirtual.ufla.br/mod/choice/view.php?id=10",
     opensAt: "2026-08-10T23:19:00.000Z",
     dueAt: "2026-08-17T02:59:00.000Z",
+    openingInformation: "Data de abertura informada pelo Campus",
+  });
+});
+
+test("une eventos com inicio e termino no começo do titulo", () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:350161@campus
+DTSTART:20260820T030100Z
+SUMMARY:Início de Atividade Avaliativa Online 1
+CATEGORIES:GCC175-2026/2
+END:VEVENT
+BEGIN:VEVENT
+UID:350197@campus
+DTSTART:20260827T025900Z
+SUMMARY:Término de Atividade Avaliativa Online 1
+CATEGORIES:GCC175-2026/2
+END:VEVENT
+END:VCALENDAR`;
+
+  const tasks = parseCalendar(ics);
+  assert.equal(tasks.length, 1);
+  assert.deepEqual(tasks[0], {
+    externalId: tasks[0]?.externalId,
+    legacyExternalIds: ["350161@campus", "350197@campus"],
+    title: "Atividade Avaliativa Online 1",
+    course: "GCC175",
+    courseCode: "GCC175",
+    opensAt: "2026-08-20T03:01:00.000Z",
+    dueAt: "2026-08-27T02:59:00.000Z",
     openingInformation: "Data de abertura informada pelo Campus",
   });
 });

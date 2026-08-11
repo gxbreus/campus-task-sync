@@ -59,6 +59,14 @@ function courseDetails(component: ICAL.Component): { code?: string; name?: strin
 }
 
 function eventPhase(title: string): { phase: EventPhase; baseTitle: string } {
+  const openingPrefix = title.match(/^(?:abertura|in[ií]cio)\s+(?:de|da|do)\s+(.+)$/i);
+  if (openingPrefix?.[1]) return { phase: "opening", baseTitle: openingPrefix[1].trim() };
+
+  const closingPrefix = title.match(
+    /^(?:encerramento|fechamento|fim|t[eé]rmino)\s+(?:de|da|do)\s+(.+)$/i,
+  );
+  if (closingPrefix?.[1]) return { phase: "closing", baseTitle: closingPrefix[1].trim() };
+
   const suffix = title.match(/\s*\(([^()]*)\)\s*$/);
   if (!suffix) return { phase: "single", baseTitle: title };
 
@@ -113,11 +121,16 @@ function consolidateEvents(events: CalendarEvent[]): CampusTask[] {
 
     tasks.push({
       externalId,
+      legacyExternalIds: [...new Set(group.map((event) => event.externalId))],
       title: reference.baseTitle,
-      description: closing?.description ?? opening?.description,
       course: reference.course,
       courseCode: reference.courseCode,
-      sourceUrl: closing?.sourceUrl ?? opening?.sourceUrl,
+      ...(closing?.description ?? opening?.description
+        ? { description: closing?.description ?? opening?.description }
+        : {}),
+      ...(closing?.sourceUrl ?? opening?.sourceUrl
+        ? { sourceUrl: closing?.sourceUrl ?? opening?.sourceUrl }
+        : {}),
       ...(opening ? { opensAt: opening.occurredAt } : {}),
       ...(closing ? { dueAt: closing.occurredAt } : {}),
       openingInformation: opening
