@@ -80,8 +80,24 @@ function taskProperties(
   syncedAt: string,
   status: ManagedTaskStatus,
   suggestedAnswer?: string,
+  initializeMissingOpening = false,
 ): JsonObject {
   const now = new Date(syncedAt);
+  const openingProperties: JsonObject = task.opensAt
+    ? {
+        Abertura: { date: { start: task.opensAt } },
+        "Informação da abertura": {
+          rich_text: [{ type: "text", text: { content: task.openingInformation } }],
+        },
+      }
+    : initializeMissingOpening
+      ? {
+          Abertura: { date: null },
+          "Informação da abertura": {
+            rich_text: [{ type: "text", text: { content: task.openingInformation } }],
+          },
+        }
+      : {};
   return {
     Nome: {
       title: [
@@ -92,10 +108,7 @@ function taskProperties(
         },
       ],
     },
-    Abertura: { date: task.opensAt ? { start: task.opensAt } : null },
-    "Informação da abertura": {
-      rich_text: [{ type: "text", text: { content: task.openingInformation } }],
-    },
+    ...openingProperties,
     Prazo: { date: task.dueAt ? { start: task.dueAt } : null },
     Alerta: { select: { name: deadlineAlert(task, now, status) } },
     Disciplina: {
@@ -200,7 +213,7 @@ export class NotionDestination implements TaskDestination {
       body: JSON.stringify({
         parent: { type: "data_source_id", data_source_id: this.options.dataSourceId },
         properties: {
-          ...taskProperties(task, syncedAt, "pending", suggestedAnswer),
+          ...taskProperties(task, syncedAt, "pending", suggestedAnswer, true),
           ...(this.options.assigneeUserId
             ? { Responsavel: { people: [{ id: this.options.assigneeUserId }] } }
             : {}),
