@@ -24,3 +24,4 @@ jobs:
           CALENDAR_ICS_URL: ${{ secrets.CALENDAR_ICS_URL }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+          NOTION_ASSIGNEE_USER_ID: ${{ secrets.NOTION_ASSIGNEE_USER_ID }}

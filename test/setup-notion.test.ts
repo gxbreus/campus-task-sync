@@ -15,6 +15,7 @@ test("extrai o ID no fim de uma URL cujo titulo contem letras hexadecimais", () 
 test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
   const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
   let savedId: string | undefined;
+  let savedAssigneeId: string | undefined;
   const fetcher: typeof fetch = async (input, init = {}) => {
     const url = String(input);
     const body = init.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined;
@@ -38,6 +39,9 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
     if (url.includes("/views?database_id=")) {
       return Response.json({ results: [] });
     }
+    if (url.includes("/users?page_size=")) {
+      return Response.json({ results: [{ id: "user-1", type: "person" }] });
+    }
     return Response.json({ id: "ok" });
   };
 
@@ -50,9 +54,13 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
     saveDataSourceId: async (id) => {
       savedId = id;
     },
+    saveAssigneeUserId: async (id) => {
+      savedAssigneeId = id;
+    },
   });
 
   assert.equal(savedId, "source-1");
+  assert.equal(savedAssigneeId, "user-1");
   assert.equal(result.created, true);
   assert.deepEqual(result.viewsCreated, ["Por disciplina", "Calendario", "Pendentes"]);
 
@@ -62,6 +70,9 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
   const initialDataSource = createDatabase?.body?.initial_data_source as Record<string, unknown>;
   const properties = initialDataSource.properties as Record<string, unknown>;
   assert.deepEqual(properties.Concluida, { checkbox: {} });
+  assert.deepEqual(properties.Abertura, { date: {} });
+  assert.ok("select" in (properties.Alerta as Record<string, unknown>));
+  assert.deepEqual(properties.Responsavel, { people: {} });
   assert.deepEqual(properties.Disciplina, {
     select: {
       options: [
