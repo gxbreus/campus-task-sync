@@ -12,6 +12,7 @@ O MVP ja possui:
 - criacao, atualizacao e cancelamento no Notion;
 - configuracao automatica de uma base estilizada no Notion;
 - checkbox de conclusao e cores por disciplina;
+- arquivamento visual: tarefas concluidas saem do quadro e ficam em `Arquivadas`;
 - consolidacao de eventos de abertura e encerramento em uma unica tarefa;
 - alerta colorido conforme a proximidade do fechamento;
 - atribuicao de novas tarefas ao usuario para notificacoes do Notion;
@@ -70,6 +71,63 @@ npm run setup:attendance
 
 O painel mostra automaticamente o total de faltas, quantas restam e um alerta
 visual quando o limite de oito dias estiver proximo.
+
+Para criar ou atualizar o painel separado de datas importantes a partir dos
+planos de ensino de 2026/2 e registrar as faltas planejadas da viagem de
+12/10 a 24/10:
+
+```bash
+npm run setup:important-dates
+```
+
+As datas extraidas do cronograma sao tratadas como previsoes. O prazo oficial
+publicado pelo professor no Campus Virtual continua sendo a referencia final.
+
+## Materiais no Google Drive
+
+O projeto tambem pode baixar os anexos visiveis das disciplinas no Campus e
+organiza-los no Google Drive desta forma:
+
+```text
+Campus Virtual - 2026.2/
+  GCC128 - Inteligencia Artificial/
+    Guia de avaliacoes.md
+    Links dos materiais.md
+    Aprendizado de Maquina/
+      aula-knn.pdf
+```
+
+O guia de cada disciplina lista as avaliacoes, os conteudos previstos e os
+alertas encontrados nos planos de ensino. Os arquivos sao identificados pela
+origem e pelo conteudo, portanto uma nova execucao atualiza o que mudou sem
+criar copias duplicadas.
+
+Materiais cadastrados pelo professor como paginas, videos ou URLs externas sao
+registrados em `Links dos materiais.md`; apenas arquivos internos do Campus sao
+baixados diretamente.
+
+Para autorizar:
+
+1. Crie um projeto no Google Cloud e habilite a **Google Drive API**.
+2. Configure a tela de consentimento OAuth e adicione sua conta como usuario de teste.
+3. Crie um cliente OAuth do tipo **Aplicativo para computador**.
+4. Baixe o JSON e salve na raiz do projeto como `.google-drive-credentials.json`.
+5. Execute `npm run setup:drive` e aceite o acesso no navegador.
+
+O projeto solicita somente o escopo `drive.file`, limitado aos arquivos que o
+proprio aplicativo cria. A autorizacao permanente fica em
+`.google-drive-token.json`; ambos os arquivos estao ignorados pelo Git.
+
+Depois, execute a sincronizacao com:
+
+```bash
+npm run sync:drive
+```
+
+Para automacao no GitHub Actions, configure `GOOGLE_CLIENT_ID`,
+`GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` e, opcionalmente,
+`GOOGLE_DRIVE_ROOT_FOLDER_ID` como secrets. Quando esses valores estiverem
+presentes, o mesmo agendamento de 30 minutos tambem atualiza os materiais.
 
 ## Configuracao local
 

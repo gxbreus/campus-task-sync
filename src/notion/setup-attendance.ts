@@ -60,6 +60,7 @@ function attendanceProperties(): JsonObject {
           'if(prop("Faltas") >= 8, "🔴 Limite atingido", if(prop("Faltas") >= 6, "🟠 Atenção", "🟢 Dentro do limite"))',
       },
     },
+    "Ausências planejadas": { rich_text: {} },
     Codigo: { rich_text: {} },
   };
 }
@@ -142,6 +143,14 @@ export async function setupAttendancePanel(
   }
   const dataSourceId = source.id;
 
+  const sourceDetails = await request(`/data_sources/${dataSourceId}`);
+  if (!objectValue(sourceDetails.properties)?.["Ausências planejadas"]) {
+    await request(`/data_sources/${dataSourceId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ properties: { "Ausências planejadas": { rich_text: {} } } }),
+    });
+  }
+
   const existingCourses = new Set<string>();
   cursor = undefined;
   do {
@@ -186,8 +195,8 @@ export async function setupAttendancePanel(
     if (typeof listed?.id === "string") table = await request(`/views/${listed.id}`);
   }
   if (typeof table?.id === "string") {
-    const sourceDetails = await request(`/data_sources/${dataSourceId}`);
-    const properties = objectValue(sourceDetails.properties);
+    const currentSourceDetails = await request(`/data_sources/${dataSourceId}`);
+    const properties = objectValue(currentSourceDetails.properties);
     const propertyId = (name: string): string | undefined => {
       const id = objectValue(properties?.[name])?.id;
       return typeof id === "string" ? decodeURIComponent(id) : undefined;
@@ -201,6 +210,7 @@ export async function setupAttendancePanel(
       ["Faltas", 90],
       ["Restantes", 100],
       ["Status", 180],
+      ["Ausências planejadas", 340],
     ];
     const codeId = propertyId("Codigo");
     await request(`/views/${table.id}`, {

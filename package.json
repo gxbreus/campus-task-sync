@@ -9,9 +9,12 @@
     "check": "npm run typecheck && npm test",
     "start": "node dist/src/cli.js",
     "setup:attendance": "tsx src/setup-attendance-cli.ts",
+    "setup:drive": "tsx src/setup-drive-cli.ts",
+    "setup:important-dates": "tsx src/setup-important-dates-cli.ts",
     "setup:notion": "tsx src/setup-notion-cli.ts",
     "setup:moodle": "tsx src/setup-moodle-token-cli.ts",
     "sync": "tsx src/cli.ts",
+    "sync:drive": "tsx src/sync-drive-cli.ts",
     "sync:dry": "tsx src/cli.ts --dry-run",
     "test": "node --import tsx --test test/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -21,6 +24,7 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
+    "googleapis": "^174.0.1",
     "ical.js": "^2.2.1"
   },
   "devDependencies": {

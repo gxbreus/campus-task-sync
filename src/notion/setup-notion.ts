@@ -360,7 +360,7 @@ export async function setupNotion(
   };
 
   if (typeof disciplineId === "string") {
-    await createView("Por disciplina", "board", {
+    const boardConfiguration = {
       configuration: {
         type: "board",
         group_by: {
@@ -371,7 +371,23 @@ export async function setupNotion(
         },
         card_layout: "compact",
       },
-    });
+      filter: {
+        and: [
+          { property: "Concluida", checkbox: { equals: false } },
+          { property: "Situacao", select: { does_not_equal: "Cancelada" } },
+        ],
+      },
+      sorts: [{ property: "Prazo", direction: "ascending" }],
+    };
+    const existingBoard = existingViews.find((view) => view.name === "Por disciplina");
+    if (typeof existingBoard?.id === "string") {
+      await request(`/views/${existingBoard.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(boardConfiguration),
+      });
+    } else {
+      await createView("Por disciplina", "board", boardConfiguration);
+    }
   }
   if (typeof deadlineId === "string") {
     await createView("Calendario", "calendar", {
@@ -387,6 +403,10 @@ export async function setupNotion(
       ],
     },
     sorts: [{ property: "Prazo", direction: "ascending" }],
+  });
+  await createView("Arquivadas", "list", {
+    filter: { property: "Concluida", checkbox: { equals: true } },
+    sorts: [{ property: "Prazo", direction: "descending" }],
   });
 
   const users = await request("/users?page_size=100");
