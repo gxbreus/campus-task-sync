@@ -115,6 +115,32 @@ test("cria uma pagina com identificador externo e prazo", async () => {
   });
 });
 
+test("aceita disciplina com virgula usando um rotulo valido no select", async () => {
+  let body: Record<string, unknown> | undefined;
+  const destination = new NotionDestination({
+    token: "token",
+    dataSourceId: "source",
+    fetcher: async (_input, init = {}) => {
+      body = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return Response.json({ id: "page" });
+    },
+  });
+
+  await destination.create({
+    externalId: "comma-course",
+    title: "Atividade 1",
+    course: "Tópicos Especiais, Segurança e Redes",
+    openingInformation: "Data não informada",
+  });
+
+  const properties = body?.properties as Record<string, unknown>;
+  assert.deepEqual(properties.Disciplina, {
+    select: { name: "Tópicos Especiais · Segurança e Redes" },
+  });
+  const title = ((properties.Nome as { title: Array<{ text: { content: string } }> }).title[0]?.text.content);
+  assert.equal(title, "Tópicos Especiais, Segurança e Redes — Atividade 1");
+});
+
 test("nao apaga uma abertura confirmada quando o calendario nao informa a data", async () => {
   let body: Record<string, unknown> | undefined;
   const destination = new NotionDestination({

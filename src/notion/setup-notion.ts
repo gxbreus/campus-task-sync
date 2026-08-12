@@ -1,5 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 
+import { notionSelectValue } from "./select-value.js";
+
 const NOTION_API_VERSION = "2026-03-11";
 const SETUP_MARKER = "Painel configurado automaticamente pelo Campus Task Sync.";
 const COURSE_COLORS = [
@@ -115,7 +117,9 @@ export async function setupNotion(
     }
     databaseId = parent.database_id;
   } else {
-    const uniqueCourses = [...new Set(options.courses.filter(Boolean))].sort();
+    const uniqueCourses = [
+      ...new Set(options.courses.filter(Boolean).map(notionSelectValue)),
+    ].sort();
     const courseOptions = uniqueCourses.map((name, index) => ({
       name,
       color: COURSE_COLORS[index % COURSE_COLORS.length],
