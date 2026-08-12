@@ -12,6 +12,7 @@ O MVP ja possui:
 - criacao, atualizacao e cancelamento no Notion;
 - configuracao automatica de uma base estilizada no Notion;
 - checkbox de conclusao e cores por disciplina;
+- arquivamento visual: tarefas concluidas saem do quadro e ficam em `Arquivadas`;
 - consolidacao de eventos de abertura e encerramento em uma unica tarefa;
 - alerta colorido conforme a proximidade do fechamento;
 - atribuicao de novas tarefas ao usuario para notificacoes do Notion;
@@ -91,6 +92,7 @@ organiza-los no Google Drive desta forma:
 Campus Virtual - 2026.2/
   GCC128 - Inteligencia Artificial/
     Guia de avaliacoes.md
+    Links dos materiais.md
     Aprendizado de Maquina/
       aula-knn.pdf
 ```
@@ -99,6 +101,10 @@ O guia de cada disciplina lista as avaliacoes, os conteudos previstos e os
 alertas encontrados nos planos de ensino. Os arquivos sao identificados pela
 origem e pelo conteudo, portanto uma nova execucao atualiza o que mudou sem
 criar copias duplicadas.
+
+Materiais cadastrados pelo professor como paginas, videos ou URLs externas sao
+registrados em `Links dos materiais.md`; apenas arquivos internos do Campus sao
+baixados diretamente.
 
 Para autorizar:
 
@@ -120,7 +126,8 @@ npm run sync:drive
 
 Para automacao no GitHub Actions, configure `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` e, opcionalmente,
-`GOOGLE_DRIVE_ROOT_FOLDER_ID` como secrets.
+`GOOGLE_DRIVE_ROOT_FOLDER_ID` como secrets. Quando esses valores estiverem
+presentes, o mesmo agendamento de 30 minutos tambem atualiza os materiais.
 
 ## Configuracao local
 

@@ -25,7 +25,10 @@ test("organiza materiais por disciplina e seção e cria guia de avaliações", 
           moduleId: 10,
           name: "Aula de KNN",
           sectionName: "Aprendizado de Máquina",
-          attachments: [{ name: "knn.pdf", apiUrl: "https://campus/material/knn.pdf", mimeType: "application/pdf" }],
+          attachments: [
+            { name: "knn.pdf", apiUrl: "https://campus/webservice/pluginfile.php/knn.pdf", mimeType: "application/pdf" },
+            { name: "Vídeo KNN", apiUrl: "https://video.example/knn" },
+          ],
         }];
       },
       async downloadAttachment() {
@@ -49,15 +52,14 @@ test("organiza materiais por disciplina e seção e cria guia de avaliações", 
     "folder-1/GCC128 - Inteligência Artificial",
     "folder-2/Aprendizado de Máquina",
   ]);
-  assert.deepEqual(files.map((file) => file.name), ["Guia de avaliações.md", "knn.pdf"]);
-  assert.equal(files[1]?.sourceId, "https://campus/material/knn.pdf");
+  assert.deepEqual(files.map((file) => file.name), ["Guia de avaliações.md", "Links dos materiais.md", "knn.pdf"]);
+  assert.equal(files[2]?.sourceId, "https://campus/webservice/pluginfile.php/knn.pdf");
   assert.deepEqual(result, {
     rootFolderId: "folder-1",
     activitiesFound: 1,
-    filesCreated: 2,
+    filesCreated: 3,
     filesUpdated: 0,
     filesUnchanged: 0,
     filesFailed: 0,
   });
 });
-

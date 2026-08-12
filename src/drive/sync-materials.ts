@@ -59,6 +59,24 @@ function sectionFolder(activity: MoodleActivity): string {
   return activity.sectionName?.trim() || "Materiais gerais";
 }
 
+function isCampusFile(activity: MoodleActivity, index: number): boolean {
+  return activity.attachments[index]?.apiUrl?.includes("/webservice/pluginfile.php/") === true;
+}
+
+function linksGuide(course: MoodleCourseSummary, activities: MoodleActivity[]): string | undefined {
+  const links = activities.flatMap((activity) =>
+    activity.attachments.flatMap((attachment, index) => {
+      if (isCampusFile(activity, index)) return [];
+      const url = attachment.browserUrl ?? attachment.apiUrl;
+      return url ? [`- [${attachment.name}](${url}) — ${sectionFolder(activity)}`] : [];
+    }),
+  );
+  if (links.length === 0) return undefined;
+  return `# Links dos materiais — ${course.name}\n\n` +
+    "Estes materiais foram publicados como páginas ou links externos, não como arquivos para download.\n\n" +
+    links.join("\n") + "\n";
+}
+
 export async function syncMaterialsToDrive(options: Options): Promise<MaterialsSyncResult> {
   const semester = options.semester ?? options.courses.map((course) => course.period).sort().at(-1) ?? "Atual";
   const rootFolderId = options.rootFolderId ?? await options.drive.getOrCreateFolder(`Campus Virtual - ${semester.replace("/", ".")}`);
@@ -67,6 +85,12 @@ export async function syncMaterialsToDrive(options: Options): Promise<MaterialsS
   let filesUpdated = 0;
   let filesUnchanged = 0;
   let filesFailed = 0;
+
+  const count = (result: UploadResult): void => {
+    if (result === "created") filesCreated += 1;
+    else if (result === "updated") filesUpdated += 1;
+    else filesUnchanged += 1;
+  };
 
   for (const course of options.courses) {
     const courseFolderId = await options.drive.getOrCreateFolder(`${course.code} - ${course.name}`, rootFolderId);
@@ -79,14 +103,26 @@ export async function syncMaterialsToDrive(options: Options): Promise<MaterialsS
       sourceId: `guide:${semester}:${course.code}`,
       courseCode: course.code,
     });
-    if (guideResult === "created") filesCreated += 1;
-    else if (guideResult === "updated") filesUpdated += 1;
-    else filesUnchanged += 1;
+    count(guideResult);
 
-    for (const activity of activities.filter((item) => item.courseCode === course.code)) {
-      if (activity.attachments.length === 0) continue;
+    const courseActivities = activities.filter((item) => item.courseCode === course.code);
+    const externalLinks = linksGuide(course, courseActivities);
+    if (externalLinks) {
+      count(await options.drive.uploadFile({
+        name: "Links dos materiais.md",
+        mimeType: "text/markdown",
+        bytes: Buffer.from(externalLinks, "utf8"),
+        parentId: courseFolderId,
+        sourceId: `links:${semester}:${course.code}`,
+        courseCode: course.code,
+      }));
+    }
+
+    for (const activity of courseActivities) {
+      const downloadable = activity.attachments.filter((_, index) => isCampusFile(activity, index));
+      if (downloadable.length === 0) continue;
       const folderId = await options.drive.getOrCreateFolder(sectionFolder(activity), courseFolderId);
-      for (const attachment of activity.attachments) {
+      for (const attachment of downloadable) {
         try {
           const bytes = await options.moodle.downloadAttachment(attachment);
           const result = await options.drive.uploadFile({
@@ -97,9 +133,7 @@ export async function syncMaterialsToDrive(options: Options): Promise<MaterialsS
             sourceId: attachment.apiUrl ?? `${activity.moduleId}:${attachment.name}`,
             courseCode: course.code,
           });
-          if (result === "created") filesCreated += 1;
-          else if (result === "updated") filesUpdated += 1;
-          else filesUnchanged += 1;
+          count(result);
         } catch (error) {
           filesFailed += 1;
           const message = error instanceof Error ? error.message : "erro desconhecido";
