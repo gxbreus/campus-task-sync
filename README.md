@@ -71,6 +71,17 @@ npm run setup:attendance
 O painel mostra automaticamente o total de faltas, quantas restam e um alerta
 visual quando o limite de oito dias estiver proximo.
 
+Para criar ou atualizar o painel separado de datas importantes a partir dos
+planos de ensino de 2026/2 e registrar as faltas planejadas da viagem de
+12/10 a 24/10:
+
+```bash
+npm run setup:important-dates
+```
+
+As datas extraidas do cronograma sao tratadas como previsoes. O prazo oficial
+publicado pelo professor no Campus Virtual continua sendo a referencia final.
+
 ## Configuracao local
 
 ```bash

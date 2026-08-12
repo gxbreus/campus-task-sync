@@ -1,0 +1,171 @@
+export type ImportantDate = {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  title: string;
+  type: "Atividade" | "Prova" | "Trabalho" | "Recuperação";
+  start: string;
+  end?: string;
+  weight?: number;
+  content?: string;
+  notes?: string;
+};
+
+export type PlannedAbsence = {
+  courseCode: string;
+  courseName: string;
+  dates: string[];
+};
+
+export const TRAVEL_PERIOD = {
+  start: "2026-10-12",
+  end: "2026-10-24",
+};
+
+export const IMPORTANT_DATES_2026_2: ImportantDate[] = [
+  {
+    id: "2026-2:GCC220:atividade-1",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Atividade Avaliativa 1",
+    type: "Atividade",
+    start: "2026-08-17",
+    content: "Pesquisa científica — parte 1",
+  },
+  {
+    id: "2026-2:GCC220:atividade-2",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Atividade Avaliativa 2",
+    type: "Atividade",
+    start: "2026-08-24",
+    content: "Pesquisa científica — parte 2",
+  },
+  {
+    id: "2026-2:GCC220:prova-1",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Prova 1",
+    type: "Prova",
+    start: "2026-08-31",
+    weight: 25,
+  },
+  {
+    id: "2026-2:GCC220:atividade-3",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Atividade Avaliativa 3",
+    type: "Atividade",
+    start: "2026-09-17",
+    content: "Revisão bibliográfica",
+  },
+  {
+    id: "2026-2:GCC220:atividade-4",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Atividade Avaliativa 4",
+    type: "Atividade",
+    start: "2026-09-21",
+    content: "Documento científico",
+    notes: "As quatro atividades avaliativas somam 20% da nota.",
+  },
+  {
+    id: "2026-2:GCC220:prova-2",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Prova 2",
+    type: "Prova",
+    start: "2026-09-28",
+    weight: 25,
+  },
+  {
+    id: "2026-2:GCC220:trabalho-pratico",
+    courseCode: "GCC220",
+    courseName: "Metodologia de Pesquisa",
+    title: "Trabalho Prático — apresentações",
+    type: "Trabalho",
+    start: "2026-11-16",
+    end: "2026-12-07",
+    weight: 30,
+    content: "Apresentação do trabalho prático conforme divisão da turma.",
+    notes: "A especificação está prevista para 05/10. Confirmar o dia de apresentação do grupo.",
+  },
+  {
+    id: "2026-2:GCC175:prova-1",
+    courseCode: "GCC175",
+    courseName: "Sistemas Gerenciadores de Banco de Dados",
+    title: "Prova 1",
+    type: "Prova",
+    start: "2026-09-23",
+    weight: 20,
+    content: "Arquitetura de SGBDs, transações, concorrência e recuperação.",
+  },
+  {
+    id: "2026-2:GCC175:prova-2",
+    courseCode: "GCC175",
+    courseName: "Sistemas Gerenciadores de Banco de Dados",
+    title: "Prova 2",
+    type: "Prova",
+    start: "2026-12-02",
+    weight: 20,
+    content: "Armazenamento, organização de arquivos e índices.",
+  },
+  {
+    id: "2026-2:GCC175:segunda-chamada",
+    courseCode: "GCC175",
+    courseName: "Sistemas Gerenciadores de Banco de Dados",
+    title: "Segunda chamada",
+    type: "Recuperação",
+    start: "2026-12-09",
+  },
+  {
+    id: "2026-2:GCC175:recuperacao",
+    courseCode: "GCC175",
+    courseName: "Sistemas Gerenciadores de Banco de Dados",
+    title: "Recuperação",
+    type: "Recuperação",
+    start: "2026-12-16",
+  },
+  ...[
+    ["01", "KNN", "2026-09-01", "2026-09-02", 15],
+    ["02", "K-means", "2026-09-15", "2026-09-16", 15],
+    ["03", "RNA-MLP", "2026-09-29", "2026-09-30", 20],
+    ["04", "Busca e jogo", "2026-10-13", "2026-10-14", 15],
+    ["05", "Algoritmo Genético", "2026-10-27", "2026-10-28", 15],
+    ["06", "Agentes Inteligentes", "2026-11-17", "2026-11-18", 20],
+  ].map(([number, subject, start, end, weight]) => ({
+    id: `2026-2:GCC128:projeto-${number}`,
+    courseCode: "GCC128",
+    courseName: "Inteligência Artificial",
+    title: `Projeto #${number} — ${subject}`,
+    type: "Trabalho" as const,
+    start: String(start),
+    end: String(end),
+    weight: Number(weight),
+    content: String(subject),
+    notes: number === "04"
+      ? "⚠️ O plano prevê 13 e 14/10, mas o calendário oficial da UFLA define recesso acadêmico de 13 a 17/10. Aguardar nova data no Campus Virtual."
+      : "Período previsto no cronograma do plano de ensino; confirmar a entrega no Campus Virtual.",
+  })),
+  {
+    id: "2026-2:GCC128:recuperacao",
+    courseCode: "GCC128",
+    courseName: "Inteligência Artificial",
+    title: "Recuperação",
+    type: "Recuperação",
+    start: "2026-12-02",
+  },
+];
+
+export const PLANNED_ABSENCES_2026_2: PlannedAbsence[] = [
+  {
+    courseCode: "GCC128",
+    courseName: "Inteligência Artificial",
+    dates: ["2026-10-20", "2026-10-21"],
+  },
+  {
+    courseCode: "GCC175",
+    courseName: "Sistemas Gerenciadores de Banco de Dados",
+    dates: ["2026-10-21"],
+  },
+];

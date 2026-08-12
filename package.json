@@ -9,6 +9,7 @@
     "check": "npm run typecheck && npm test",
     "start": "node dist/src/cli.js",
     "setup:attendance": "tsx src/setup-attendance-cli.ts",
+    "setup:important-dates": "tsx src/setup-important-dates-cli.ts",
     "setup:notion": "tsx src/setup-notion-cli.ts",
     "setup:moodle": "tsx src/setup-moodle-token-cli.ts",
     "sync": "tsx src/cli.ts",
