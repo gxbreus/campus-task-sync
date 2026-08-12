@@ -1,4 +1,5 @@
 import type { ImportantDate } from "../plans/semester-2026-2.js";
+import { notionSelectValue } from "./select-value.js";
 
 const NOTION_API_VERSION = "2026-03-11";
 const DATABASE_TITLE = "Datas Importantes";
@@ -44,7 +45,7 @@ function propertiesFor(date: ImportantDate, travel: Options["travel"]): JsonObje
   const duringTravel = overlapsTravel(date, travel);
   return {
     Evento: { title: [{ text: { content: date.title } }] },
-    Disciplina: { select: { name: date.courseName } },
+    Disciplina: { select: { name: notionSelectValue(date.courseName) } },
     Data: { date: { start: date.start, ...(date.end ? { end: date.end } : {}) } },
     Tipo: { select: { name: date.type } },
     Peso: date.weight === undefined ? { number: null } : { number: date.weight },
