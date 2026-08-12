@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .env
+credentials.json
+token.json
+.google-drive-credentials.json
+.google-drive-token.json
 .env.*
 !.env.example
 coverage/

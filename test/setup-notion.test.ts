@@ -74,7 +74,7 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
   assert.equal(savedId, "source-1");
   assert.equal(savedAssigneeId, "user-1");
   assert.equal(result.created, true);
-  assert.deepEqual(result.viewsCreated, ["Por disciplina", "Calendario", "Pendentes"]);
+  assert.deepEqual(result.viewsCreated, ["Por disciplina", "Calendario", "Pendentes", "Arquivadas"]);
 
   const createDatabase = requests.find(
     (request) => request.url.endsWith("/databases") && request.method === "POST",
@@ -102,6 +102,22 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
         { name: "GCC220", color: "green" },
       ],
     },
+  });
+  const board = requests.find(
+    (request) => request.url.endsWith("/views") && request.body?.name === "Por disciplina",
+  );
+  assert.deepEqual(board?.body?.filter, {
+    and: [
+      { property: "Concluida", checkbox: { equals: false } },
+      { property: "Situacao", select: { does_not_equal: "Cancelada" } },
+    ],
+  });
+  const archived = requests.find(
+    (request) => request.url.endsWith("/views") && request.body?.name === "Arquivadas",
+  );
+  assert.deepEqual(archived?.body?.filter, {
+    property: "Concluida",
+    checkbox: { equals: true },
   });
 });
 
@@ -140,7 +156,7 @@ test("retoma uma configuracao parcial sem duplicar a base ou as visualizacoes", 
   });
 
   assert.equal(result.created, false);
-  assert.deepEqual(result.viewsCreated, ["Calendario", "Pendentes"]);
+  assert.deepEqual(result.viewsCreated, ["Calendario", "Pendentes", "Arquivadas"]);
   assert.equal(
     requests.filter((request) => request.url.endsWith("/databases") && request.method === "POST")
       .length,
