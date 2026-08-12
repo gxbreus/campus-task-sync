@@ -308,6 +308,12 @@ export async function setupNotion(
     const id = objectValue(properties?.[name])?.id;
     return typeof id === "string" ? decodeURIComponent(id) : undefined;
   };
+  const activeTasksFilter = {
+    and: [
+      { property: "Concluida", checkbox: { equals: false } },
+      { property: "Situacao", select: { does_not_equal: "Cancelada" } },
+    ],
+  };
   const tableView = existingViews.find((view) => view.type === "table");
   if (typeof tableView?.id === "string") {
     const visibleColumns = [
@@ -340,6 +346,8 @@ export async function setupNotion(
           ],
           frozen_column_index: 0,
         },
+        filter: activeTasksFilter,
+        sorts: [{ property: "Prazo", direction: "ascending" }],
       }),
     });
   }
@@ -375,12 +383,7 @@ export async function setupNotion(
         },
         card_layout: "compact",
       },
-      filter: {
-        and: [
-          { property: "Concluida", checkbox: { equals: false } },
-          { property: "Situacao", select: { does_not_equal: "Cancelada" } },
-        ],
-      },
+      filter: activeTasksFilter,
       sorts: [{ property: "Prazo", direction: "ascending" }],
     };
     const existingBoard = existingViews.find((view) => view.name === "Por disciplina");
@@ -394,18 +397,23 @@ export async function setupNotion(
     }
   }
   if (typeof deadlineId === "string") {
-    await createView("Calendario", "calendar", {
+    const calendarConfiguration = {
       configuration: { type: "calendar", date_property_id: deadlineId },
+      filter: activeTasksFilter,
       sorts: [{ property: "Prazo", direction: "ascending" }],
-    });
+    };
+    const existingCalendar = existingViews.find((view) => view.name === "Calendario");
+    if (typeof existingCalendar?.id === "string") {
+      await request(`/views/${existingCalendar.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(calendarConfiguration),
+      });
+    } else {
+      await createView("Calendario", "calendar", calendarConfiguration);
+    }
   }
   await createView("Pendentes", "list", {
-    filter: {
-      and: [
-        { property: "Concluida", checkbox: { equals: false } },
-        { property: "Situacao", select: { does_not_equal: "Cancelada" } },
-      ],
-    },
+    filter: activeTasksFilter,
     sorts: [{ property: "Prazo", direction: "ascending" }],
   });
   await createView("Arquivadas", "list", {

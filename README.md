@@ -12,7 +12,8 @@ O MVP ja possui:
 - criacao, atualizacao e cancelamento no Notion;
 - configuracao automatica de uma base estilizada no Notion;
 - checkbox de conclusao e cores por disciplina;
-- arquivamento visual: tarefas concluidas saem do quadro e ficam em `Arquivadas`;
+- arquivamento visual: tarefas concluidas saem da tabela, do quadro e do calendario,
+  ficando em `Arquivadas`, onde podem ser desmarcadas para voltar;
 - consolidacao de eventos de abertura e encerramento em uma unica tarefa;
 - alerta colorido conforme a proximidade do fechamento;
 - atribuicao de novas tarefas ao usuario para notificacoes do Notion;
