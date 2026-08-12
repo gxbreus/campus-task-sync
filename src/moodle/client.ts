@@ -15,6 +15,7 @@ export type MoodleActivity = {
   courseName: string;
   moduleId: number;
   name: string;
+  sectionName?: string;
   url?: string;
   description?: string;
   opensAt?: string;
@@ -239,7 +240,9 @@ export class MoodleClient {
       const code = courseCode(course);
       if (!code) continue;
       for (const sectionValue of sections) {
-        for (const moduleValue of arrayValue(objectValue(sectionValue)?.modules)) {
+        const section = objectValue(sectionValue);
+        const sectionName = stringValue(section?.name);
+        for (const moduleValue of arrayValue(section?.modules)) {
           const module = objectValue(moduleValue);
           if (!module) continue;
           const moduleId = numberValue(module?.id);
@@ -275,6 +278,7 @@ export class MoodleClient {
             courseName: courseDisplayName(course),
             moduleId,
             name,
+            ...(sectionName ? { sectionName } : {}),
             attachments,
             ...(stringValue(module?.url) ? { url: stringValue(module?.url) } : {}),
             ...(htmlToPlainText(stringValue(assignment?.intro) ?? stringValue(module?.description))

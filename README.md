@@ -82,6 +82,46 @@ npm run setup:important-dates
 As datas extraidas do cronograma sao tratadas como previsoes. O prazo oficial
 publicado pelo professor no Campus Virtual continua sendo a referencia final.
 
+## Materiais no Google Drive
+
+O projeto tambem pode baixar os anexos visiveis das disciplinas no Campus e
+organiza-los no Google Drive desta forma:
+
+```text
+Campus Virtual - 2026.2/
+  GCC128 - Inteligencia Artificial/
+    Guia de avaliacoes.md
+    Aprendizado de Maquina/
+      aula-knn.pdf
+```
+
+O guia de cada disciplina lista as avaliacoes, os conteudos previstos e os
+alertas encontrados nos planos de ensino. Os arquivos sao identificados pela
+origem e pelo conteudo, portanto uma nova execucao atualiza o que mudou sem
+criar copias duplicadas.
+
+Para autorizar:
+
+1. Crie um projeto no Google Cloud e habilite a **Google Drive API**.
+2. Configure a tela de consentimento OAuth e adicione sua conta como usuario de teste.
+3. Crie um cliente OAuth do tipo **Aplicativo para computador**.
+4. Baixe o JSON e salve na raiz do projeto como `.google-drive-credentials.json`.
+5. Execute `npm run setup:drive` e aceite o acesso no navegador.
+
+O projeto solicita somente o escopo `drive.file`, limitado aos arquivos que o
+proprio aplicativo cria. A autorizacao permanente fica em
+`.google-drive-token.json`; ambos os arquivos estao ignorados pelo Git.
+
+Depois, execute a sincronizacao com:
+
+```bash
+npm run sync:drive
+```
+
+Para automacao no GitHub Actions, configure `GOOGLE_CLIENT_ID`,
+`GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` e, opcionalmente,
+`GOOGLE_DRIVE_ROOT_FOLDER_ID` como secrets.
+
 ## Configuracao local
 
 ```bash
