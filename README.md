@@ -61,6 +61,16 @@ npm run setup:notion
 O comando cria a base, as propriedades, as cores por disciplina e as visoes de
 quadro, calendario e pendencias. O `NOTION_DATA_SOURCE_ID` e salvo no `.env`.
 
+Para criar ou atualizar o painel separado de controle de faltas, com oito
+checkboxes por disciplina do semestre:
+
+```bash
+npm run setup:attendance
+```
+
+O painel mostra automaticamente o total de faltas, quantas restam e um alerta
+visual quando o limite de oito dias estiver proximo.
+
 ## Configuracao local
 
 ```bash
