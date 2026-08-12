@@ -28,6 +28,12 @@ type MoodleCourse = {
   fullname: string;
 };
 
+export type MoodleCourseSummary = {
+  code: string;
+  name: string;
+  period: string;
+};
+
 function objectValue(value: unknown): JsonObject | undefined {
   return typeof value === "object" && value !== null ? (value as JsonObject) : undefined;
 }
@@ -176,6 +182,23 @@ export class MoodleClient {
       const fullname = stringValue(course?.fullname);
       return id && shortname && fullname ? [{ id, shortname, fullname }] : [];
     });
+  }
+
+  async getCurrentSemesterCourses(): Promise<MoodleCourseSummary[]> {
+    const courses = (await this.userCourses()).flatMap((course) => {
+      const code = courseCode(course);
+      const period = course.shortname.match(/-(\d{4}\/[12])-/)?.[1];
+      return code && period ? [{ code, name: courseDisplayName(course), period }] : [];
+    });
+    const currentPeriod = courses.map((course) => course.period).sort().at(-1);
+    if (!currentPeriod) return [];
+    return [
+      ...new Map(
+        courses
+          .filter((course) => course.period === currentPeriod)
+          .map((course) => [course.code, course]),
+      ).values(),
+    ].sort((left, right) => left.name.localeCompare(right.name, "pt-BR"));
   }
 
   async getActivities(requestedCourseCodes: string[]): Promise<MoodleActivity[]> {

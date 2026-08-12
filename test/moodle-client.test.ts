@@ -123,3 +123,36 @@ test("converte o HTML do Moodle em texto legivel", () => {
     "Instruções\nLeia o texto & responda.",
   );
 });
+
+test("lista somente as disciplinas do semestre atual", async () => {
+  const fetcher: typeof fetch = async (_input, init) => {
+    const body = new URLSearchParams(String(init?.body));
+    if (body.get("wsfunction") === "core_webservice_get_site_info") {
+      return Response.json({ userid: 42 });
+    }
+    return Response.json([
+      {
+        id: 1,
+        shortname: "GCC128-2026/2--10A",
+        fullname: "Inteligência Artificial (10A) - PROFESSOR",
+      },
+      {
+        id: 2,
+        shortname: "GCC220-2026/2--14A",
+        fullname: "Metodologia de Pesquisa (14A) - PROFESSOR",
+      },
+      {
+        id: 3,
+        shortname: "GCC101-2025/2--14A",
+        fullname: "Disciplina Antiga (14A) - PROFESSOR",
+      },
+      { id: 4, shortname: "TutCV", fullname: "Tutorial Campus Virtual" },
+    ]);
+  };
+  const client = new MoodleClient({ calendarUrl, token: "token", fetcher });
+
+  assert.deepEqual(await client.getCurrentSemesterCourses(), [
+    { code: "GCC128", name: "Inteligência Artificial", period: "2026/2" },
+    { code: "GCC220", name: "Metodologia de Pesquisa", period: "2026/2" },
+  ]);
+});
