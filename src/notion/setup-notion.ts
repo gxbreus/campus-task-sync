@@ -317,13 +317,13 @@ export async function setupNotion(
   const tableView = existingViews.find((view) => view.type === "table");
   if (typeof tableView?.id === "string") {
     const visibleColumns = [
+      ["Concluida", 120],
       ["Disciplina", 220],
       ["Nome", 360],
       ["Abertura", 170],
       ["Informação da abertura", 260],
       ["Prazo", 170],
       ["Alerta", 190],
-      ["Concluida", 120],
       ["Link", 140],
       ["Descricao", 380],
       ["Sugestão de resposta", 500],
