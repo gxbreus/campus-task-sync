@@ -2,10 +2,11 @@ import type { MoodleCourseSummary } from "../moodle/client.js";
 
 const DEFAULT_SUBJECTS_URL = "https://gradeufla.com.br/data/subjects.csv";
 
-type SubjectRow = {
+export type GradeUflaSubject = {
   course: string;
   matrix: string;
   code: string;
+  name: string;
   credits: number;
 };
 
@@ -51,7 +52,7 @@ function matrixOrder(matrix: string): number {
   return match ? Number(match[1]) * 100 + Number(match[2]) : 0;
 }
 
-function subjectRows(csv: string): SubjectRow[] {
+export function parseGradeUflaSubjects(csv: string): GradeUflaSubject[] {
   const [headers = [], ...rows] = parseCsv(csv);
   const positions = new Map(headers.map((header, index) => [header.trim().toLowerCase(), index]));
   const at = (row: string[], name: string): string => row[positions.get(name) ?? -1]?.trim() ?? "";
@@ -59,9 +60,10 @@ function subjectRows(csv: string): SubjectRow[] {
     const course = at(row, "curso");
     const matrix = at(row, "matriz");
     const code = at(row, "codigo").toUpperCase();
+    const name = at(row, "nome");
     const credits = Number(at(row, "creditos"));
     return course && matrix && code && Number.isInteger(credits) && credits > 0
-      ? [{ course, matrix, code, credits }]
+      ? [{ course, matrix, code, name, credits }]
       : [];
   });
 }
@@ -77,7 +79,7 @@ export class GradeUflaClient {
     if (!response.ok) {
       throw new Error(`Grade UFLA indisponivel (HTTP ${response.status}).`);
     }
-    const subjects = subjectRows(await response.text());
+    const subjects = parseGradeUflaSubjects(await response.text());
     const result = new Map<string, number>();
     for (const course of courses) {
       const byCode = subjects.filter((subject) => subject.code === course.code.toUpperCase());

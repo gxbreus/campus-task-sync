@@ -88,7 +88,7 @@ export function htmlToPlainText(value: string | undefined): string | undefined {
 }
 
 function courseCode(course: MoodleCourse): string | undefined {
-  return course.shortname.match(/^([A-Z]{2,}\d{3})/i)?.[1]?.toUpperCase();
+  return course.shortname.match(/^(.+?)-\d{4}\/[12]-/i)?.[1]?.trim().toUpperCase();
 }
 
 function courseDisplayName(course: MoodleCourse): string {
@@ -99,7 +99,15 @@ function courseDisplayName(course: MoodleCourse): string {
 }
 
 function curriculumIds(shortname: string): string[] {
-  return [...new Set(shortname.match(/(?:^|-)G\d{3}(?=-|$)/g)?.map((value) => value.replace(/^-/, "")) ?? [])];
+  const scheduleAndCourses = shortname.split("--")[1] ?? "";
+  return [
+    ...new Set(
+      scheduleAndCourses
+        .split("-")
+        .map((value) => value.trim().toUpperCase())
+        .filter((value) => /^G[A-Z]{0,2}\d{3}$/.test(value)),
+    ),
+  ];
 }
 
 function timestampIso(value: unknown): string | undefined {
