@@ -321,14 +321,20 @@ export async function setupNotion(
       ["Disciplina", 220],
       ["Nome", 360],
       ["Abertura", 170],
-      ["Informação da abertura", 260],
       ["Prazo", 170],
       ["Alerta", 190],
       ["Link", 140],
       ["Descricao", 380],
       ["Sugestão de resposta", 500],
     ] as const;
-    const hiddenColumns = ["Responsavel", "ID externo", "Origem", "Sincronizado em", "Situacao"];
+    const hiddenColumns = [
+      "Informação da abertura",
+      "Responsavel",
+      "ID externo",
+      "Origem",
+      "Sincronizado em",
+      "Situacao",
+    ];
     await request(`/views/${tableView.id}`, {
       method: "PATCH",
       body: JSON.stringify({
