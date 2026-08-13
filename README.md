@@ -7,6 +7,8 @@ Actions.
 
 Uma visão acessível das tecnologias e responsabilidades do sistema está no
 [relatório técnico em PDF](./Visao-Tecnica-Campus-Task-Sync.pdf).
+Consulte também a [política de privacidade e segurança](./PRIVACY.md) para
+entender quais dados saem do computador e como revogar os acessos.
 
 Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
 [guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull
@@ -132,7 +134,9 @@ npm run sync:dry
 ```
 
 O comando mostra as tarefas encontradas sem alterar o Notion. Se o semestre
-ainda estiver começando, o resultado pode estar vazio.
+ainda estiver começando, o resultado pode estar vazio. A saída pode conter
+enunciados, nomes de disciplinas e links privados; não publique o terminal sem
+revisar e ocultar esses dados.
 
 ### 6. Criar o painel do Notion
 
@@ -322,6 +326,11 @@ Opcional para sugestões por IA:
 
 Cada fork precisa dos próprios secrets. Secrets do repositório original não são
 copiados nem disponibilizados para forks.
+
+Revise atualizações antes de executá-las ou incorporá-las ao seu fork. Um código
+malicioso executado localmente ou no seu próprio GitHub Actions poderia ler os
+tokens disponíveis naquele ambiente. O mantenedor do repositório original não
+recebe automaticamente os secrets configurados em forks ou clones.
 
 ## Variáveis do `.env`
 
