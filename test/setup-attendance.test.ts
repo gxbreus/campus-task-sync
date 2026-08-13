@@ -9,7 +9,7 @@ type CapturedRequest = {
   body?: Record<string, unknown>;
 };
 
-test("cria painel com oito checkboxes e uma linha por disciplina", async () => {
+test("cria painel com limite de faltas calculado pelos creditos", async () => {
   const requests: CapturedRequest[] = [];
   const fetcher: typeof fetch = async (input, init = {}) => {
     const url = String(input);
@@ -36,6 +36,8 @@ test("cria painel com oito checkboxes e uma linha por disciplina", async () => {
         properties: Object.fromEntries(
           [
             "Disciplina",
+            "Créditos",
+            "Limite",
             ...Array.from({ length: 8 }, (_, index) => `Falta ${index + 1}`),
             "Faltas",
             "Restantes",
@@ -52,8 +54,8 @@ test("cria painel com oito checkboxes e uma linha por disciplina", async () => {
     token: "token",
     parentPageId: "page-1",
     courses: [
-      { code: "GCC128", name: "Inteligência Artificial" },
-      { code: "GCC220", name: "Metodologia de Pesquisa" },
+      { code: "GCC128", name: "Inteligência Artificial", credits: 4 },
+      { code: "GCC220", name: "Metodologia de Pesquisa", credits: 2 },
     ],
     fetcher,
   });
@@ -73,6 +75,7 @@ test("cria painel com oito checkboxes e uma linha por disciplina", async () => {
     assert.deepEqual(properties[`Falta ${index}`], { checkbox: {} });
   }
   assert.match(JSON.stringify(properties.Faltas), /Falta 8/);
+  assert.deepEqual(properties.Limite, { number: { format: "number" } });
   assert.equal(
     requests.filter((request) => request.url.endsWith("/pages") && request.method === "POST")
       .length,
@@ -116,7 +119,7 @@ test("reutiliza painel existente e nao duplica disciplinas", async () => {
   const result = await setupAttendancePanel({
     token: "token",
     parentPageId: "page-1",
-    courses: [{ code: "GCC128", name: "Inteligência Artificial" }],
+    courses: [{ code: "GCC128", name: "Inteligência Artificial", credits: 4 }],
     fetcher,
   });
 

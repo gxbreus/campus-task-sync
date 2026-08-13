@@ -5,6 +5,9 @@ no Notion. Opcionalmente, consulta os detalhes das atividades no Moodle,
 organiza materiais no Google Drive e executa tudo automaticamente pelo GitHub
 Actions.
 
+Uma visão acessível das tecnologias e responsabilidades do sistema está no
+[relatório técnico em PDF](./Visao-Tecnica-Campus-Task-Sync.pdf).
+
 ## O que o projeto faz
 
 - lê a URL dinâmica do calendário do Campus Virtual;
@@ -169,9 +172,21 @@ execute:
 npm run setup:attendance
 ```
 
-O comando identifica as disciplinas do semestre e cria uma linha por matéria,
-com oito checkboxes, total de faltas, quantidade restante e alerta visual.
-Executá-lo novamente não duplica disciplinas.
+O comando identifica pelo Campus as disciplinas e as matrizes da grade de cada
+usuário. Em seguida, consulta os dados públicos do
+[Grade UFLA](https://gradeufla.com.br/), seleciona a matriz mais recente
+associada à turma e configura o limite individual como `créditos × 2`: uma
+disciplina de 4 créditos permite 8 faltas; uma de 2 créditos permite 4. A tabela
+mostra os créditos, o limite, o total de faltas, a quantidade restante e um
+alerta visual. Executá-lo novamente atualiza as disciplinas existentes sem
+apagar os quadrados já marcados.
+
+Se uma turma tiver um identificador fora do padrão e os créditos não puderem
+ser reconhecidos, informe as exceções no `.env`:
+
+```env
+COURSE_CREDITS=GCC128=4,GCC175=2
+```
 
 ## Datas importantes e planos de ensino
 

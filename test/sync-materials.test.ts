@@ -7,7 +7,7 @@ test("organiza materiais por disciplina e seção e cria guia de avaliações", 
   const folders: string[] = [];
   const files: Array<{ name: string; parentId: string; sourceId: string }> = [];
   const result = await syncMaterialsToDrive({
-    courses: [{ code: "GCC128", name: "Inteligência Artificial", period: "2026/2" }],
+    courses: [{ code: "GCC128", name: "Inteligência Artificial", period: "2026/2", curriculumIds: ["G014"] }],
     importantDates: [{
       id: "exam-1",
       courseCode: "GCC128",

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { MoodleClient, htmlToPlainText } from "../src/moodle/client.js";
+import {
+  MoodleClient,
+  htmlToPlainText,
+} from "../src/moodle/client.js";
 
 const calendarUrl =
   "https://campusvirtual.ufla.br/presencial/calendar/export_execute.php?token=calendar";
@@ -133,7 +136,7 @@ test("lista somente as disciplinas do semestre atual", async () => {
     return Response.json([
       {
         id: 1,
-        shortname: "GCC128-2026/2--10A",
+        shortname: "GCC128-2026/2--10A-G010-G014",
         fullname: "Inteligência Artificial (10A) - PROFESSOR",
       },
       {
@@ -152,7 +155,7 @@ test("lista somente as disciplinas do semestre atual", async () => {
   const client = new MoodleClient({ calendarUrl, token: "token", fetcher });
 
   assert.deepEqual(await client.getCurrentSemesterCourses(), [
-    { code: "GCC128", name: "Inteligência Artificial", period: "2026/2" },
-    { code: "GCC220", name: "Metodologia de Pesquisa", period: "2026/2" },
+    { code: "GCC128", name: "Inteligência Artificial", period: "2026/2", curriculumIds: ["G010", "G014"] },
+    { code: "GCC220", name: "Metodologia de Pesquisa", period: "2026/2", curriculumIds: [] },
   ]);
 });
