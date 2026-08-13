@@ -16,7 +16,7 @@
     "sync": "tsx src/cli.ts",
     "sync:drive": "tsx src/sync-drive-cli.ts",
     "sync:dry": "tsx src/cli.ts --dry-run",
-    "test": "node --import tsx --test test/**/*.test.ts",
+    "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
