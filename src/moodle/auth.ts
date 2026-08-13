@@ -9,10 +9,31 @@ type MoodleAuthOptions = {
 
 type JsonObject = Record<string, unknown>;
 
+const CAMPUS_HOSTNAME = "campusvirtual.ufla.br";
+
+function trustedCampusUrl(value: string): URL {
+  const parsedUrl = new URL(value);
+  if (
+    parsedUrl.protocol !== "https:" ||
+    parsedUrl.hostname !== CAMPUS_HOSTNAME ||
+    parsedUrl.port ||
+    parsedUrl.username ||
+    parsedUrl.password
+  ) {
+    throw new Error(
+      `URL do Campus nao confiavel. Use somente https://${CAMPUS_HOSTNAME}/.`,
+    );
+  }
+  return parsedUrl;
+}
+
 export function campusBaseUrlFromCalendarUrl(calendarUrl: string): string {
-  const parsedUrl = new URL(calendarUrl);
+  const parsedUrl = trustedCampusUrl(calendarUrl);
   const calendarPathIndex = parsedUrl.pathname.indexOf("/calendar/");
-  const campusPath = calendarPathIndex >= 0 ? parsedUrl.pathname.slice(0, calendarPathIndex) : "";
+  if (calendarPathIndex < 0) {
+    throw new Error("URL do Campus invalida: o caminho do calendario nao foi encontrado.");
+  }
+  const campusPath = parsedUrl.pathname.slice(0, calendarPathIndex);
   return `${parsedUrl.origin}${campusPath}`;
 }
 

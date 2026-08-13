@@ -20,6 +20,38 @@ test("identifica a raiz presencial do Campus", () => {
   );
 });
 
+test("rejeita dominio falso antes de transmitir credenciais", async () => {
+  let requested = false;
+  const fetcher: typeof fetch = async () => {
+    requested = true;
+    return Response.json({ token: "nao-deveria-ser-emitido" });
+  };
+
+  await assert.rejects(
+    requestMoodleToken({
+      calendarUrl: "https://campusvirtual.ufla.br.exemplo.com/presencial/calendar/export.php",
+      username: "estudante",
+      password: "senha-local",
+      fetcher,
+    }),
+    /URL do Campus nao confiavel/,
+  );
+  assert.equal(requested, false);
+});
+
+test("exige HTTPS e o caminho de calendario oficial", () => {
+  assert.throws(
+    () => campusBaseUrlFromCalendarUrl(
+      "http://campusvirtual.ufla.br/presencial/calendar/export.php",
+    ),
+    /URL do Campus nao confiavel/,
+  );
+  assert.throws(
+    () => campusBaseUrlFromCalendarUrl("https://campusvirtual.ufla.br/presencial/curso"),
+    /caminho do calendario nao foi encontrado/,
+  );
+});
+
 test("solicita e valida um token sem expor as credenciais", async () => {
   const requests: Array<{ url: string; body: string }> = [];
   const fetcher: typeof fetch = async (input, init) => {
