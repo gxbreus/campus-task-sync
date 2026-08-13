@@ -12,6 +12,12 @@ Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
 [guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull
 request e nunca publique tokens ou URLs privadas.
 
+## Licença
+
+Este projeto é distribuído sob a [licença MIT](./LICENSE). Você pode estudar,
+usar, modificar e redistribuir o código, mantendo o aviso de autoria e a
+licença nas cópias.
+
 ## O que o projeto faz
 
 - lê a URL dinâmica do calendário do Campus Virtual;
