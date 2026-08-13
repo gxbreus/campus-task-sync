@@ -8,6 +8,10 @@ Actions.
 Uma visão acessível das tecnologias e responsabilidades do sistema está no
 [relatório técnico em PDF](./Visao-Tecnica-Campus-Task-Sync.pdf).
 
+Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
+[guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull
+request e nunca publique tokens ou URLs privadas.
+
 ## O que o projeto faz
 
 - lê a URL dinâmica do calendário do Campus Virtual;
@@ -180,6 +184,10 @@ disciplina de 4 créditos permite 8 faltas; uma de 2 créditos permite 4. A tabe
 mostra os créditos, o limite, o total de faltas, a quantidade restante e um
 alerta visual. Executá-lo novamente atualiza as disciplinas existentes sem
 apagar os quadrados já marcados.
+
+Para componentes com limites muito altos, como estágios e TCCs, o painel mantém
+até 20 quadrados e usa a coluna `Faltas adicionais` para continuar a contagem.
+Isso evita criar centenas de colunas e mantém o painel compatível com o Notion.
 
 Se uma turma tiver um identificador fora do padrão e os créditos não puderem
 ser reconhecidos, informe as exceções no `.env`:

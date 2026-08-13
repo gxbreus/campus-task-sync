@@ -1,5 +1,6 @@
 const NOTION_API_VERSION = "2026-03-11";
 const DATABASE_TITLE = "Controle de Faltas";
+const MAX_CHECKBOXES = 20;
 
 type JsonObject = Record<string, unknown>;
 
@@ -44,10 +45,11 @@ function richTextValue(property: unknown): string | undefined {
 }
 
 function formulaTotal(checkboxCount: number): string {
-  return Array.from(
+  const checkboxes = Array.from(
     { length: checkboxCount },
     (_, index) => `toNumber(prop("Falta ${index + 1}"))`,
   ).join(" + ");
+  return `toNumber(prop("Faltas adicionais")) + ${checkboxes}`;
 }
 
 function attendanceProperties(checkboxCount: number): JsonObject {
@@ -61,6 +63,7 @@ function attendanceProperties(checkboxCount: number): JsonObject {
     ),
     Créditos: { number: { format: "number" } },
     Limite: { number: { format: "number" } },
+    "Faltas adicionais": { number: { format: "number" } },
     Faltas: { formula: { expression: formulaTotal(checkboxCount) } },
     Restantes: { formula: { expression: 'prop("Limite") - prop("Faltas")' } },
     Status: {
@@ -80,9 +83,9 @@ export async function setupAttendancePanel(
   if (options.courses.some((course) => !Number.isInteger(course.credits) || course.credits <= 0)) {
     throw new Error("Toda disciplina precisa ter uma quantidade valida de creditos.");
   }
-  const requiredCheckboxCount = Math.max(
-    1,
-    ...options.courses.map((course) => course.credits * 2),
+  const requiredCheckboxCount = Math.min(
+    MAX_CHECKBOXES,
+    Math.max(1, ...options.courses.map((course) => course.credits * 2)),
   );
   const fetcher = options.fetcher ?? fetch;
   const request = async (path: string, init: RequestInit = {}): Promise<JsonObject> => {
@@ -169,9 +172,17 @@ export async function setupAttendancePanel(
   const checkboxCount = Math.max(requiredCheckboxCount, existingCheckboxCount);
   const desiredProperties = attendanceProperties(checkboxCount);
   delete desiredProperties.Disciplina;
+  const formulaProperties = Object.fromEntries(
+    ["Faltas", "Restantes", "Status"].map((name) => [name, desiredProperties[name]]),
+  );
+  for (const name of Object.keys(formulaProperties)) delete desiredProperties[name];
   await request(`/data_sources/${dataSourceId}`, {
     method: "PATCH",
     body: JSON.stringify({ properties: desiredProperties }),
+  });
+  await request(`/data_sources/${dataSourceId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ properties: formulaProperties }),
   });
   sourceDetails = await request(`/data_sources/${dataSourceId}`);
 
@@ -208,6 +219,9 @@ export async function setupAttendancePanel(
             properties: {
               Créditos: { number: course.credits },
               Limite: { number: course.credits * 2 },
+              ...(objectValue(existing.properties?.["Faltas adicionais"])?.number == null
+                ? { "Faltas adicionais": { number: 0 } }
+                : {}),
               Codigo: { rich_text: [{ text: { content: course.code } }] },
             },
           }),
@@ -224,6 +238,7 @@ export async function setupAttendancePanel(
           Codigo: { rich_text: [{ text: { content: course.code } }] },
           Créditos: { number: course.credits },
           Limite: { number: course.credits * 2 },
+          "Faltas adicionais": { number: 0 },
           ...Object.fromEntries(
             Array.from({ length: checkboxCount }, (_, index) => [
               `Falta ${index + 1}`,
@@ -257,6 +272,7 @@ export async function setupAttendancePanel(
         80,
       ] as [string, number]),
       ["Faltas", 90],
+      ["Faltas adicionais", 150],
       ["Restantes", 100],
       ["Status", 180],
       ["Ausências planejadas", 340],

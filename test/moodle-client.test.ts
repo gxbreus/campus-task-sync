@@ -141,8 +141,13 @@ test("lista somente as disciplinas do semestre atual", async () => {
       },
       {
         id: 2,
-        shortname: "GCC220-2026/2--14A",
+        shortname: "GCC220-2026/2--14A-GD006-GCT039",
         fullname: "Metodologia de Pesquisa (14A) - PROFESSOR",
+      },
+      {
+        id: 5,
+        shortname: "IFSMINAS-2026/2--TE-G038",
+        fullname: "Curso Técnico do Instituto Federal do Sul de Minas - PROFESSOR",
       },
       {
         id: 3,
@@ -155,7 +160,8 @@ test("lista somente as disciplinas do semestre atual", async () => {
   const client = new MoodleClient({ calendarUrl, token: "token", fetcher });
 
   assert.deepEqual(await client.getCurrentSemesterCourses(), [
+    { code: "IFSMINAS", name: "Curso Técnico do Instituto Federal do Sul de Minas - PROFESSOR", period: "2026/2", curriculumIds: ["G038"] },
     { code: "GCC128", name: "Inteligência Artificial", period: "2026/2", curriculumIds: ["G010", "G014"] },
-    { code: "GCC220", name: "Metodologia de Pesquisa", period: "2026/2", curriculumIds: [] },
+    { code: "GCC220", name: "Metodologia de Pesquisa", period: "2026/2", curriculumIds: ["GD006", "GCT039"] },
   ]);
 });

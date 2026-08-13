@@ -1,0 +1,37 @@
+name: Relatar um problema
+description: Informe um comportamento incorreto ou incompatibilidade com uma grade.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Não cole tokens, URLs privadas de calendário ou dados pessoais."
+  - type: textarea
+    id: problem
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o resultado observado e o resultado esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir?
+      description: Liste os passos e comandos, removendo qualquer segredo.
+    validations:
+      required: true
+  - type: input
+    id: course
+    attributes:
+      label: Curso, matriz e disciplina
+      description: "Exemplo: Agronomia, matriz 2023/01, GAG101."
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Sistema operacional e versão do Node.js.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Saída sem informações privadas
+      render: shell

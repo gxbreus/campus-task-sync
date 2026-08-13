@@ -38,6 +38,7 @@ test("cria painel com limite de faltas calculado pelos creditos", async () => {
             "Disciplina",
             "Créditos",
             "Limite",
+            "Faltas adicionais",
             ...Array.from({ length: 8 }, (_, index) => `Falta ${index + 1}`),
             "Faltas",
             "Restantes",
@@ -126,4 +127,37 @@ test("reutiliza painel existente e nao duplica disciplinas", async () => {
   assert.equal(result.created, false);
   assert.equal(result.coursesCreated, 0);
   assert.equal(pageCreations, 0);
+});
+
+test("limita componentes extensos a vinte checkboxes", async () => {
+  let createdDatabase: Record<string, unknown> | undefined;
+  const fetcher: typeof fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.includes("/blocks/page-1/children")) return Response.json({ results: [] });
+    if (url.endsWith("/databases") && init.method === "POST") {
+      createdDatabase = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return Response.json({ id: "attendance-database" });
+    }
+    if (url.endsWith("/databases/attendance-database")) {
+      return Response.json({ data_sources: [{ id: "attendance-source" }] });
+    }
+    if (url.endsWith("/data_sources/attendance-source/query")) {
+      return Response.json({ results: [] });
+    }
+    if (url.includes("/views?database_id=")) return Response.json({ results: [] });
+    return Response.json({ properties: {} });
+  };
+
+  await setupAttendancePanel({
+    token: "token",
+    parentPageId: "page-1",
+    courses: [{ code: "GFI184", name: "Componente especial", credits: 68 }],
+    fetcher,
+  });
+
+  const source = createdDatabase?.initial_data_source as Record<string, unknown>;
+  const properties = source.properties as Record<string, unknown>;
+  assert.deepEqual(properties["Falta 20"], { checkbox: {} });
+  assert.equal(properties["Falta 21"], undefined);
+  assert.deepEqual(properties["Faltas adicionais"], { number: { format: "number" } });
 });
