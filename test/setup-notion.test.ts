@@ -93,7 +93,8 @@ test("cria base com checkbox, cursos coloridos e visualizacoes", async () => {
   );
   const configuration = updateDefaultView?.body?.configuration as Record<string, unknown>;
   const columns = configuration.properties as Array<Record<string, unknown>>;
-  assert.equal(columns[0]?.property_id, "course-property");
+  assert.equal(columns[0]?.property_id, "done-property");
+  assert.equal(columns[1]?.property_id, "course-property");
   assert.equal(columns.filter((column) => column.visible === true).at(-1)?.property_id, "answer-property");
   assert.deepEqual(updateDefaultView?.body?.filter, {
     and: [
