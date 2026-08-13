@@ -1,0 +1,30 @@
+name: Sugerir uma melhoria
+description: Proponha uma funcionalidade ou uma integração.
+title: "[Melhoria]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Qual necessidade a melhoria resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Como você imagina a solução?
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Área principal
+      options:
+        - Campus/Moodle
+        - Notion
+        - Google Drive
+        - Grade e créditos
+        - Instalação e documentação
+        - Outra
+    validations:
+      required: true

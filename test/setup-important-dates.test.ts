@@ -82,7 +82,45 @@ test("registra apenas faltas planejadas ainda não aplicadas", async () => {
   assert.equal(properties?.["Falta 4"], undefined);
 });
 
+test("leva faltas planejadas excedentes para o contador adicional", async () => {
+  let pagePatch: Record<string, unknown> | undefined;
+  const fetcher: typeof fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.endsWith("/data_sources/attendance")) {
+      return Response.json({ properties: { "Ausências planejadas": { id: "planned" } } });
+    }
+    if (url.endsWith("/data_sources/attendance/query")) {
+      return Response.json({ results: [{
+        id: "course-page",
+        properties: {
+          Codigo: { rich_text: [{ plain_text: "GCC128" }] },
+          "Ausências planejadas": { rich_text: [] },
+          "Falta 1": { checkbox: true },
+          "Faltas adicionais": { number: 2 },
+        },
+      }] });
+    }
+    if (url.endsWith("/pages/course-page") && init.body) {
+      pagePatch = JSON.parse(String(init.body)) as Record<string, unknown>;
+    }
+    return Response.json({ id: "ok" });
+  };
+
+  await markPlannedAbsences({
+    token: "token",
+    dataSourceId: "attendance",
+    absences: [{
+      courseCode: "GCC128",
+      courseName: "Inteligência Artificial",
+      dates: ["2026-10-13", "2026-10-14"],
+    }],
+    fetcher,
+  });
+
+  const properties = object(pagePatch?.properties);
+  assert.deepEqual(properties?.["Faltas adicionais"], { number: 4 });
+});
+
 function object(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : undefined;
 }
-

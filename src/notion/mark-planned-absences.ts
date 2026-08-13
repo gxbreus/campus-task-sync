@@ -25,6 +25,11 @@ function richText(property: unknown): string {
     .join("");
 }
 
+function numberValue(property: unknown): number {
+  const value = objectValue(property)?.number;
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 export async function markPlannedAbsences(options: Options): Promise<number> {
   const fetcher = options.fetcher ?? fetch;
   const request = async (path: string, init: RequestInit = {}): Promise<JsonObject> => {
@@ -79,13 +84,17 @@ export async function markPlannedAbsences(options: Options): Promise<number> {
         .filter((name) => /^Falta \d+$/.test(name))
         .sort((left, right) => Number(left.slice(6)) - Number(right.slice(6)))
         .filter((name) => objectValue(properties?.[name])?.checkbox !== true);
-      if (availableCheckboxes.length < newDates.length) {
-        throw new Error(`Não há quadrados de falta suficientes para ${plan.courseName}.`);
-      }
-      newDates.forEach((date, index) => {
+      newDates.slice(0, availableCheckboxes.length).forEach((date, index) => {
         changes[availableCheckboxes[index]!] = { checkbox: true };
         recordedDates.add(date);
       });
+      const overflow = newDates.slice(availableCheckboxes.length);
+      if (overflow.length > 0) {
+        changes["Faltas adicionais"] = {
+          number: numberValue(properties?.["Faltas adicionais"]) + overflow.length,
+        };
+        overflow.forEach((date) => recordedDates.add(date));
+      }
       if (newDates.length > 0) {
         changes["Ausências planejadas"] = {
           rich_text: [{ text: { content: [...recordedDates].sort().join(", ") } }],
