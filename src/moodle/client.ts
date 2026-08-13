@@ -33,6 +33,7 @@ export type MoodleCourseSummary = {
   code: string;
   name: string;
   period: string;
+  curriculumIds: string[];
 };
 
 function objectValue(value: unknown): JsonObject | undefined {
@@ -95,6 +96,10 @@ function courseDisplayName(course: MoodleCourse): string {
     .replace(/\s+\([^)]*\)\s+-\s+.+$/u, "")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+function curriculumIds(shortname: string): string[] {
+  return [...new Set(shortname.match(/(?:^|-)G\d{3}(?=-|$)/g)?.map((value) => value.replace(/^-/, "")) ?? [])];
 }
 
 function timestampIso(value: unknown): string | undefined {
@@ -189,7 +194,14 @@ export class MoodleClient {
     const courses = (await this.userCourses()).flatMap((course) => {
       const code = courseCode(course);
       const period = course.shortname.match(/-(\d{4}\/[12])-/)?.[1];
-      return code && period ? [{ code, name: courseDisplayName(course), period }] : [];
+      return code && period
+        ? [{
+            code,
+            name: courseDisplayName(course),
+            period,
+            curriculumIds: curriculumIds(course.shortname),
+          }]
+        : [];
     });
     const currentPeriod = courses.map((course) => course.period).sort().at(-1);
     if (!currentPeriod) return [];

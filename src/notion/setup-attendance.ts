@@ -1,10 +1,9 @@
 const NOTION_API_VERSION = "2026-03-11";
 const DATABASE_TITLE = "Controle de Faltas";
-const ABSENCE_LIMIT = 8;
 
 type JsonObject = Record<string, unknown>;
 
-export type AttendanceCourse = { code: string; name: string };
+export type AttendanceCourse = { code: string; name: string; credits: number };
 
 type SetupAttendanceOptions = {
   token: string;
@@ -36,28 +35,38 @@ function titleValue(property: unknown): string | undefined {
   return value || undefined;
 }
 
-function formulaTotal(): string {
+function richTextValue(property: unknown): string | undefined {
+  const value = arrayValue(objectValue(property)?.rich_text)
+    .map((item) => objectValue(item)?.plain_text)
+    .filter((item): item is string => typeof item === "string")
+    .join("");
+  return value || undefined;
+}
+
+function formulaTotal(checkboxCount: number): string {
   return Array.from(
-    { length: ABSENCE_LIMIT },
+    { length: checkboxCount },
     (_, index) => `toNumber(prop("Falta ${index + 1}"))`,
   ).join(" + ");
 }
 
-function attendanceProperties(): JsonObject {
+function attendanceProperties(checkboxCount: number): JsonObject {
   return {
     Disciplina: { title: {} },
     ...Object.fromEntries(
-      Array.from({ length: ABSENCE_LIMIT }, (_, index) => [
+      Array.from({ length: checkboxCount }, (_, index) => [
         `Falta ${index + 1}`,
         { checkbox: {} },
       ]),
     ),
-    Faltas: { formula: { expression: formulaTotal() } },
-    Restantes: { formula: { expression: `${ABSENCE_LIMIT} - prop("Faltas")` } },
+    Créditos: { number: { format: "number" } },
+    Limite: { number: { format: "number" } },
+    Faltas: { formula: { expression: formulaTotal(checkboxCount) } },
+    Restantes: { formula: { expression: 'prop("Limite") - prop("Faltas")' } },
     Status: {
       formula: {
         expression:
-          'if(prop("Faltas") >= 8, "🔴 Limite atingido", if(prop("Faltas") >= 6, "🟠 Atenção", "🟢 Dentro do limite"))',
+          'if(prop("Faltas") >= prop("Limite"), "🔴 Limite atingido", if(prop("Faltas") >= prop("Limite") - 2, "🟠 Atenção", "🟢 Dentro do limite"))',
       },
     },
     "Ausências planejadas": { rich_text: {} },
@@ -68,6 +77,13 @@ function attendanceProperties(): JsonObject {
 export async function setupAttendancePanel(
   options: SetupAttendanceOptions,
 ): Promise<SetupAttendanceResult> {
+  if (options.courses.some((course) => !Number.isInteger(course.credits) || course.credits <= 0)) {
+    throw new Error("Toda disciplina precisa ter uma quantidade valida de creditos.");
+  }
+  const requiredCheckboxCount = Math.max(
+    1,
+    ...options.courses.map((course) => course.credits * 2),
+  );
   const fetcher = options.fetcher ?? fetch;
   const request = async (path: string, init: RequestInit = {}): Promise<JsonObject> => {
     const response = await fetcher(`https://api.notion.com/v1${path}`, {
@@ -117,7 +133,7 @@ export async function setupAttendancePanel(
             type: "text",
             text: {
               content:
-                "Marque um quadrado a cada dia de falta. O limite configurado é de 8 dias por disciplina.",
+                "Marque um quadrado a cada dia de falta. O limite de cada disciplina é calculado como créditos × 2.",
             },
           },
         ],
@@ -125,7 +141,7 @@ export async function setupAttendancePanel(
         is_inline: true,
         initial_data_source: {
           title: [{ type: "text", text: { content: "Faltas por disciplina" } }],
-          properties: attendanceProperties(),
+          properties: attendanceProperties(requiredCheckboxCount),
         },
       }),
     });
@@ -143,15 +159,23 @@ export async function setupAttendancePanel(
   }
   const dataSourceId = source.id;
 
-  const sourceDetails = await request(`/data_sources/${dataSourceId}`);
-  if (!objectValue(sourceDetails.properties)?.["Ausências planejadas"]) {
-    await request(`/data_sources/${dataSourceId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ properties: { "Ausências planejadas": { rich_text: {} } } }),
-    });
-  }
+  let sourceDetails = await request(`/data_sources/${dataSourceId}`);
+  const existingCheckboxCount = Object.keys(objectValue(sourceDetails.properties) ?? {})
+    .flatMap((name) => {
+      const match = name.match(/^Falta (\d+)$/);
+      return match ? [Number(match[1])] : [];
+    })
+    .reduce((highest, value) => Math.max(highest, value), 0);
+  const checkboxCount = Math.max(requiredCheckboxCount, existingCheckboxCount);
+  const desiredProperties = attendanceProperties(checkboxCount);
+  delete desiredProperties.Disciplina;
+  await request(`/data_sources/${dataSourceId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ properties: desiredProperties }),
+  });
+  sourceDetails = await request(`/data_sources/${dataSourceId}`);
 
-  const existingCourses = new Set<string>();
+  const existingCourses = new Map<string, { id?: string; properties?: JsonObject }>();
   cursor = undefined;
   do {
     const pages = await request(`/data_sources/${dataSourceId}/query`, {
@@ -161,14 +185,36 @@ export async function setupAttendancePanel(
     for (const value of arrayValue(pages.results)) {
       const properties = objectValue(objectValue(value)?.properties);
       const name = titleValue(properties?.Disciplina);
-      if (name) existingCourses.add(name);
+      const code = richTextValue(properties?.Codigo);
+      const id = objectValue(value)?.id;
+      const entry = {
+        ...(typeof id === "string" ? { id } : {}),
+        ...(properties ? { properties } : {}),
+      };
+      if (code) existingCourses.set(code.toUpperCase(), entry);
+      if (name) existingCourses.set(name, entry);
     }
     cursor = typeof pages.next_cursor === "string" ? pages.next_cursor : undefined;
   } while (cursor);
 
   let coursesCreated = 0;
   for (const course of options.courses) {
-    if (existingCourses.has(course.name)) continue;
+    const existing = existingCourses.get(course.code.toUpperCase()) ?? existingCourses.get(course.name);
+    if (existing) {
+      if (existing.id) {
+        await request(`/pages/${existing.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            properties: {
+              Créditos: { number: course.credits },
+              Limite: { number: course.credits * 2 },
+              Codigo: { rich_text: [{ text: { content: course.code } }] },
+            },
+          }),
+        });
+      }
+      continue;
+    }
     await request("/pages", {
       method: "POST",
       body: JSON.stringify({
@@ -176,8 +222,10 @@ export async function setupAttendancePanel(
         properties: {
           Disciplina: { title: [{ text: { content: course.name } }] },
           Codigo: { rich_text: [{ text: { content: course.code } }] },
+          Créditos: { number: course.credits },
+          Limite: { number: course.credits * 2 },
           ...Object.fromEntries(
-            Array.from({ length: ABSENCE_LIMIT }, (_, index) => [
+            Array.from({ length: checkboxCount }, (_, index) => [
               `Falta ${index + 1}`,
               { checkbox: false },
             ]),
@@ -195,15 +243,16 @@ export async function setupAttendancePanel(
     if (typeof listed?.id === "string") table = await request(`/views/${listed.id}`);
   }
   if (typeof table?.id === "string") {
-    const currentSourceDetails = await request(`/data_sources/${dataSourceId}`);
-    const properties = objectValue(currentSourceDetails.properties);
+    const properties = objectValue(sourceDetails.properties);
     const propertyId = (name: string): string | undefined => {
       const id = objectValue(properties?.[name])?.id;
       return typeof id === "string" ? decodeURIComponent(id) : undefined;
     };
     const columns: Array<[string, number]> = [
       ["Disciplina", 300],
-      ...Array.from({ length: ABSENCE_LIMIT }, (_, index) => [
+      ["Créditos", 90],
+      ["Limite", 90],
+      ...Array.from({ length: checkboxCount }, (_, index) => [
         `Falta ${index + 1}`,
         80,
       ] as [string, number]),

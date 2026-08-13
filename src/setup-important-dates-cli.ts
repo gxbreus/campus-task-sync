@@ -1,6 +1,8 @@
 import "dotenv/config";
 
+import { coursesWithCredits } from "./attendance/course-credits.js";
 import { loadNotionSetupConfig } from "./config.js";
+import { GradeUflaClient } from "./grade-ufla/client.js";
 import { MoodleClient } from "./moodle/client.js";
 import { markPlannedAbsences } from "./notion/mark-planned-absences.js";
 import { setupAttendancePanel } from "./notion/setup-attendance.js";
@@ -13,7 +15,9 @@ async function main(): Promise<void> {
   if (!config.moodleToken) throw new Error("MOODLE_TOKEN é obrigatório para localizar o controle de faltas.");
   const parentPageId = parseNotionPageId(config.notionParentPageUrl);
   const moodle = new MoodleClient({ calendarUrl: config.calendarUrl, token: config.moodleToken });
-  const courses = await moodle.getCurrentSemesterCourses();
+  const moodleCourses = await moodle.getCurrentSemesterCourses();
+  const gradeCredits = await new GradeUflaClient().latestCredits(moodleCourses);
+  const courses = coursesWithCredits(moodleCourses, process.env.COURSE_CREDITS, gradeCredits);
   const attendance = await setupAttendancePanel({
     token: config.notionToken,
     parentPageId,

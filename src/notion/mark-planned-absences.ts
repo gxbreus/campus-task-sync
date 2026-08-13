@@ -75,7 +75,9 @@ export async function markPlannedAbsences(options: Options): Promise<number> {
           .filter(Boolean),
       );
       const newDates = plan.dates.filter((date) => !recordedDates.has(date));
-      const availableCheckboxes = Array.from({ length: 8 }, (_, index) => `Falta ${index + 1}`)
+      const availableCheckboxes = Object.keys(properties ?? {})
+        .filter((name) => /^Falta \d+$/.test(name))
+        .sort((left, right) => Number(left.slice(6)) - Number(right.slice(6)))
         .filter((name) => objectValue(properties?.[name])?.checkbox !== true);
       if (availableCheckboxes.length < newDates.length) {
         throw new Error(`Não há quadrados de falta suficientes para ${plan.courseName}.`);
