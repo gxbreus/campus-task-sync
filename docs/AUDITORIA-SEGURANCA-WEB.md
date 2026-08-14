@@ -18,6 +18,9 @@ uma certificação independente nem garante ausência absoluta de vulnerabilidad
 - tokens do Notion são cifrados com AES-256-GCM antes de chegar ao Supabase;
 - o token emitido pelo Campus é validado, cifrado e persistido; usuário e senha
   são apagados da interface e nunca chegam à API da aplicação;
+- planos de ensino são processados temporariamente em memória; os PDFs e o
+  texto integral extraído não são persistidos pelo beta;
+- a rota periódica exige um segredo compartilhado comparado em tempo constante;
 - não existem analytics, anúncios ou scripts de rastreamento.
 
 ## Proteções verificadas
@@ -52,7 +55,8 @@ usam fonte de 16 pixels no celular para evitar zoom automático no iOS.
 - o OAuth do Notion depende das chaves e da migração do Supabase configuradas no
   ambiente de produção;
 - a criação dos painéis e a sincronização manual estão ativas; a sincronização
-  periódica no beta web ainda não está ativa;
+  periódica somente fica ativa após configurar o mesmo segredo na Vercel e no
+  GitHub Actions;
 - antes de abrir o sincronizador, são necessários testes adicionais de
   isolamento entre instalações, revogação e rotação da chave de criptografia;
 - deve ser publicada na Vercel uma regra de rate limit para

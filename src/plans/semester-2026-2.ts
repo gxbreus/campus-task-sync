@@ -1,21 +1,6 @@
-export type ImportantDate = {
-  id: string;
-  courseCode: string;
-  courseName: string;
-  title: string;
-  type: "Atividade" | "Prova" | "Trabalho" | "Recuperação";
-  start: string;
-  end?: string;
-  weight?: number;
-  content?: string;
-  notes?: string;
-};
+import type { ImportantDate, PlannedAbsence } from "./types.js";
 
-export type PlannedAbsence = {
-  courseCode: string;
-  courseName: string;
-  dates: string[];
-};
+export type { ImportantDate, PlannedAbsence } from "./types.js";
 
 export const TRAVEL_PERIOD = {
   start: "2026-10-12",

@@ -16,7 +16,7 @@ type SetupWizardProps = {
   taskPanelCreated: boolean;
 };
 
-type ActionName = "tasks" | "attendance" | "sync";
+type ActionName = "structure" | "sync";
 
 export function SetupWizard({
   calendarConnected,
@@ -114,18 +114,22 @@ export function SetupWizard({
       const response = await fetch(endpoint, { method: "POST" });
       const result = (await response.json()) as {
         calendarTasks?: number;
-        courses?: number;
+        importantDates?: { dates?: number; plansParsed?: number };
         message?: string;
-        tasksFound?: number;
+        tasksPanel?: { tasksFound?: number };
       };
       if (!response.ok) throw new Error(result.message ?? "Não foi possível concluir esta ação.");
-      if (action === "tasks") {
+      if (action === "structure") {
         setPanelReady(true);
-        setActionMessage(`Painel criado. ${result.tasksFound ?? 0} atividades encontradas.`);
-      } else if (action === "attendance") {
-        setActionMessage(`Controle de faltas criado para ${result.courses ?? 0} disciplinas.`);
+        setActionMessage(
+          `Notion estruturado: ${result.tasksPanel?.tasksFound ?? 0} atividades e ` +
+          `${result.importantDates?.dates ?? 0} datas de planos encontradas.`,
+        );
       } else {
-        setActionMessage(`Sincronização concluída com ${result.calendarTasks ?? 0} atividades.`);
+        setActionMessage(
+          `Sincronização concluída com ${result.calendarTasks ?? 0} atividades e ` +
+          `${result.importantDates?.dates ?? 0} datas importantes.`,
+        );
       }
     } catch (error) {
       setActionError(true);
@@ -166,15 +170,13 @@ export function SetupWizard({
             className={`button primary notion-button ${notionConfigured ? "" : "disabled"}`}
             href={notionConfigured ? "/api/notion/connect" : undefined}
             aria-disabled={!notionConfigured}
-            target="_blank"
-            rel="noopener noreferrer"
           >
             {notionConnected ? "Reconectar ao Notion" : "Conectar ao Notion"}
           </a>
           {!notionConfigured && <p className="hint">A integração pública ainda precisa ser configurada na Vercel.</p>}
           {notionConfigured && !notionConnected && (
             <p className="hint">
-              A autorização abrirá em outra guia. No celular, mantenha o fluxo no navegador caso o aplicativo do Notion abra somente a página inicial.
+              Após autorizar a página, você voltará automaticamente para continuar a configuração.
             </p>
           )}
           {notionError && <p className="feedback error">A autorização não foi concluída. Tente novamente e escolha uma página do Notion.</p>}
@@ -189,8 +191,9 @@ export function SetupWizard({
             <div><h3>Cole o calendário do Campus</h3><p>Use a URL dinâmica, não o arquivo de backup.</p></div>
             {calendarState === "success" && <span className="status success">Conectado</span>}
           </div>
-          <a className="text-link" href={CAMPUS_CALENDAR_URL} target="_blank" rel="noreferrer">
-            Abrir exportação do calendário ↗
+          <a className="campus-calendar-button" href={CAMPUS_CALENDAR_URL} target="_blank" rel="noreferrer">
+            <span aria-hidden="true">↗</span>
+            Abrir o Campus e obter o link do calendário
           </a>
           <div className="calendar-guide" aria-label="Opções para exportar o calendário">
             <strong>Na tela do Campus, selecione:</strong>
@@ -297,13 +300,8 @@ export function SetupWizard({
             <button
               className="action-card"
               disabled={!technicalStepsReady || Boolean(actionLoading)}
-              onClick={() => executeAction("tasks", "/api/panels/tasks")}
-            ><span>✓</span><strong>{actionLoading === "tasks" ? "Criando painel..." : panelReady ? "Atualizar painel de tarefas" : "Criar painel de tarefas"}</strong><small>Cria a base e as visualizações no Notion</small></button>
-            <button
-              className="action-card"
-              disabled={!technicalStepsReady || Boolean(actionLoading)}
-              onClick={() => executeAction("attendance", "/api/panels/attendance")}
-            ><span>▦</span><strong>{actionLoading === "attendance" ? "Criando controle..." : "Criar controle de faltas"}</strong><small>Calcula o limite pelos créditos</small></button>
+              onClick={() => executeAction("structure", "/api/panels/structure")}
+            ><span>▦</span><strong>{actionLoading === "structure" ? "Estruturando o Notion..." : panelReady ? "Atualizar estrutura do Notion" : "Estruturar Notion"}</strong><small>Cria tarefas, controle de faltas e datas dos planos de ensino</small></button>
             <button
               className="action-card"
               disabled={!technicalStepsReady || !panelReady || Boolean(actionLoading)}

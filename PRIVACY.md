@@ -38,6 +38,11 @@ criptografia fica separada no cofre de variáveis da Vercel. O identificador da
 base de tarefas criada no Notion é guardado para as atualizações seguintes. O
 conteúdo integral das atividades não é mantido no banco do serviço.
 
+Ao procurar planos de ensino, o beta baixa os PDFs disponibilizados nas
+disciplinas e extrai o texto apenas durante a execução. O PDF e o texto integral
+não são armazenados no Supabase; somente as datas acadêmicas identificadas são
+enviadas ao painel autorizado no Notion.
+
 ## Dados utilizados
 
 - **Campus Virtual:** a URL privada do calendário e, opcionalmente, o token do
