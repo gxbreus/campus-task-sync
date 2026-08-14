@@ -5,17 +5,19 @@ próprio usuário. O beta web também possui uma interface hospedada na Vercel. 
 uso local, o mantenedor não recebe automaticamente credenciais, tarefas ou
 materiais de quem clona ou cria um fork.
 
-## Beta web atual
+## Beta web
 
-Na etapa atual, o beta web não possui banco de dados, cadastro de usuário ou
-rotina de sincronização em segundo plano. O código da aplicação não grava
-cookies, `localStorage`, `sessionStorage` ou IndexedDB. Recarregar a página
-descarta o andamento da configuração.
+O beta web não exige cadastro de usuário. Quando a conexão pública do Notion é
+ativada, ele grava um cookie estritamente necessário, aleatório, `HttpOnly`,
+`Secure` e `SameSite=Lax`. O valor não contém credenciais: no banco é guardado
+somente o hash SHA-256 desse identificador. A aplicação não usa `localStorage`,
+`sessionStorage` ou IndexedDB.
 
 A senha institucional é enviada pelo navegador diretamente ao endereço HTTPS
 oficial do Campus Virtual. Ela não passa pela Vercel nem pela API do Campus Task
-Sync. Depois da validação, usuário, senha e token são removidos do estado da
-página.
+Sync. Depois da validação, usuário e senha são removidos do estado da página. O
+token do Moodle só será persistido quando o estudante confirmar a ativação da
+sincronização; a senha nunca será persistida.
 
 A URL privada do calendário passa temporariamente pela rota de validação da
 aplicação, pois o Campus não permite que o navegador consulte diretamente essa
@@ -24,14 +26,14 @@ requisição, não segue redirecionamentos e não registra o conteúdo ou a URL 
 logs próprios. A Vercel e o Campus Virtual ainda processam metadados técnicos de
 rede conforme as políticas de cada serviço.
 
-## Automação web futura
+## Dados persistidos no beta web
 
-Uma sincronização automática não é possível sem persistir as credenciais que
-permitem consultar o Campus e atualizar o Notion. Antes de ativar essa etapa, o
-beta informará claramente quais dados serão guardados e pedirá autorização. A
-arquitetura prevista armazena apenas identificadores e tokens necessários,
-criptografados com AES-256-GCM; nunca a senha institucional nem o conteúdo
-integral das atividades.
+O OAuth do Notion guarda no Supabase os identificadores do workspace e do bot,
+além dos tokens de acesso e renovação criptografados com AES-256-GCM. A chave de
+criptografia fica separada no cofre de variáveis da Vercel. A próxima etapa da
+automação guardará também a URL privada do calendário e, se autorizado, o token
+do Moodle, sempre criptografados. O conteúdo integral das atividades não é
+mantido no banco do serviço.
 
 ## Dados utilizados
 
@@ -87,6 +89,7 @@ nomes, enunciados e links privados.
 - gere uma nova URL de calendário ou revogue a exportação no Campus;
 - revogue o token do Moodle nas preferências de segurança do Campus;
 - remova a conexão na página do Notion e revogue a integração;
+- limpe os dados do site no navegador para apagar o cookie da instalação;
 - revogue o acesso do aplicativo na Conta Google;
 - apague os secrets em **Settings → Secrets and variables → Actions**;
 - remova `.env`, `.google-drive-credentials.json` e

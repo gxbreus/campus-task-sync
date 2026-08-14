@@ -7,7 +7,13 @@ type State = "idle" | "loading" | "success" | "error";
 const CAMPUS_CALENDAR_URL = "https://campusvirtual.ufla.br/presencial/calendar/export.php";
 const MOODLE_TOKEN_URL = "https://campusvirtual.ufla.br/presencial/login/token.php";
 
-export function SetupWizard() {
+type SetupWizardProps = {
+  notionConfigured: boolean;
+  notionConnected: boolean;
+  notionError: boolean;
+};
+
+export function SetupWizard({ notionConfigured, notionConnected, notionError }: SetupWizardProps) {
   const [calendar, setCalendar] = useState("");
   const [calendarState, setCalendarState] = useState<State>("idle");
   const [calendarMessage, setCalendarMessage] = useState("");
@@ -18,8 +24,8 @@ export function SetupWizard() {
   const [moodleTokenReady, setMoodleTokenReady] = useState(false);
 
   const completed = useMemo(
-    () => Number(calendarState === "success") + Number(moodleState === "success"),
-    [calendarState, moodleState],
+    () => Number(notionConnected) + Number(calendarState === "success") + Number(moodleState === "success"),
+    [notionConnected, calendarState, moodleState],
   );
 
   async function validateCalendar(event: FormEvent) {
@@ -89,17 +95,27 @@ export function SetupWizard() {
         </div>
       </div>
 
-      <article className="step current">
+      <article className={`step current ${notionConnected ? "done" : ""}`}>
         <div className="step-number">1</div>
         <div className="step-content">
           <div className="step-title">
             <div><h3>Conecte seu Notion</h3><p>Autorize somente a página onde o painel será criado.</p></div>
-            <span className="status waiting">Em preparação</span>
+            {notionConnected ? (
+              <span className="status success">Conectado</span>
+            ) : (
+              <span className="status waiting">Aguardando conexão</span>
+            )}
           </div>
-          <button className="button primary" type="button" disabled>
-            Conectar ao Notion
-          </button>
-          <p className="hint">O botão será ativado quando cadastrarmos a integração pública do beta.</p>
+          <a
+            className={`button primary notion-button ${notionConfigured ? "" : "disabled"}`}
+            href={notionConfigured ? "/api/notion/connect" : undefined}
+            aria-disabled={!notionConfigured}
+          >
+            {notionConnected ? "Reconectar ao Notion" : "Conectar ao Notion"}
+          </a>
+          {!notionConfigured && <p className="hint">A integração pública ainda precisa ser configurada na Vercel.</p>}
+          {notionError && <p className="feedback error">A autorização não foi concluída. Tente novamente e escolha uma página do Notion.</p>}
+          {notionConnected && <p className="feedback success">Workspace autorizado e token protegido com criptografia.</p>}
         </div>
       </article>
 
@@ -142,7 +158,7 @@ export function SetupWizard() {
           </div>
           <div className="security-note">
             <strong>Sua senha não passa pelo Campus Task Sync.</strong>
-            <span>O navegador a envia diretamente ao Campus Virtual por HTTPS. Este beta não usa banco, cookies nem armazenamento local para guardar seus dados.</span>
+            <span>O navegador a envia diretamente ao Campus Virtual por HTTPS. A senha nunca é salva; somente os tokens autorizados são protegidos com criptografia para viabilizar a sincronização.</span>
           </div>
           <form onSubmit={obtainMoodleToken} className="credentials-form">
             <label>

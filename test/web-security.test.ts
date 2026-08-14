@@ -95,8 +95,23 @@ test("envia headers contra injecao, clickjacking e recursos desnecessarios", () 
   assert.match(headers.get("permissions-policy") ?? "", /camera=\(\)/);
 });
 
-test("interface nao usa armazenamento persistente do navegador", async () => {
+test("interface nao usa armazenamento acessivel por JavaScript no navegador", async () => {
   const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|document\.cookie/);
   assert.doesNotMatch(source, /console\.(log|debug|info|warn|error)/);
+});
+
+test("OAuth do Notion usa state, cookies protegidos e tokens cifrados", async () => {
+  const connect = await readFile("apps/web/app/api/notion/connect/route.ts", "utf8");
+  const callback = await readFile("apps/web/app/api/notion/callback/route.ts", "utf8");
+  const crypto = await readFile("apps/web/lib/server/crypto.ts", "utf8");
+
+  assert.match(connect, /httpOnly: true/);
+  assert.match(connect, /sameSite: "lax"/);
+  assert.match(callback, /timingSafeEqual/);
+  assert.match(callback, /hashOpaqueToken\(installationToken\)/);
+  assert.match(callback, /encryptSecret\(notion\.access_token/);
+  assert.match(callback, /encryptSecret\(notion\.refresh_token/);
+  assert.match(crypto, /aes-256-gcm/);
+  assert.doesNotMatch(callback, /console\.(log|debug|info|warn|error)/);
 });

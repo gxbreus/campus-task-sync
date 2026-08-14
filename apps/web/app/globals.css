@@ -146,6 +146,8 @@ main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 .button.primary { color: white; background: var(--green); }
 .button.secondary { color: var(--green-dark); background: var(--green-soft); }
 .button:disabled { cursor: not-allowed; opacity: .55; }
+.notion-button { width: fit-content; display: inline-flex; align-items: center; text-decoration: none; }
+.notion-button.disabled { pointer-events: none; cursor: not-allowed; opacity: .55; }
 .hint { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
 .text-link { min-height: 44px; display: inline-flex; align-items: center; margin-bottom: 8px; color: var(--green); font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
