@@ -24,8 +24,25 @@ export default function Home() {
         </div>
       </header>
       <SetupWizard />
-      <footer>
-        Projeto open source e sem vínculo oficial com a UFLA.
+      <footer className="site-footer">
+        <p>Projeto open source e sem vínculo oficial com a UFLA.</p>
+        <nav aria-label="Links do desenvolvedor">
+          <span>Desenvolvido por @gxbreus</span>
+          <a
+            href="https://github.com/gxbreus"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://www.linkedin.com/in/gabreus/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LinkedIn
+          </a>
+        </nav>
       </footer>
     </main>
   );

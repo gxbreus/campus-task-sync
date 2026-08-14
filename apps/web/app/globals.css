@@ -175,7 +175,17 @@ input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 107, 95
 .action-card span { color: var(--green); font-size: 1.25rem; }
 .action-card small { color: var(--muted); }
 
-footer { padding: 32px 0 48px; color: var(--muted); text-align: center; font-size: .8rem; }
+.site-footer {
+  padding: 32px 0 48px;
+  color: var(--muted);
+  text-align: center;
+  font-size: .8rem;
+}
+.site-footer p { margin: 0 0 8px; }
+.site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 12px; }
+.site-footer a { color: var(--green); font-weight: 750; text-underline-offset: 3px; }
+.site-footer a:hover { color: var(--green-dark); }
+.site-footer a:focus-visible { border-radius: 4px; outline: 3px solid rgba(22, 107, 95, .2); outline-offset: 3px; }
 
 @media (max-width: 760px) {
   main { width: 100%; max-width: 680px; padding: 0 10px; }
