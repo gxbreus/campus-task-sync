@@ -26,7 +26,7 @@ export default function Home() {
       <SetupWizard />
       <footer className="site-footer">
         <p>Projeto open source e sem vínculo oficial com a UFLA.</p>
-        <nav aria-label="Links do desenvolvedor">
+        <nav aria-label="Links do projeto e do desenvolvedor">
           <span>Desenvolvido por @gxbreus</span>
           <a
             href="https://github.com/gxbreus"
@@ -41,6 +41,13 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             LinkedIn
+          </a>
+          <a
+            href="https://github.com/gxbreus/campus-task-sync"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Colabore com o projeto
           </a>
         </nav>
       </footer>
