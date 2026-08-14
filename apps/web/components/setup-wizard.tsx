@@ -136,6 +136,25 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
           <a className="text-link" href={CAMPUS_CALENDAR_URL} target="_blank" rel="noreferrer">
             Abrir exportação do calendário ↗
           </a>
+          <div className="calendar-guide" aria-label="Opções para exportar o calendário">
+            <strong>Na tela do Campus, selecione:</strong>
+            <ol>
+              <li>
+                <span>Eventos a exportar</span>
+                <b>Todos os eventos</b>
+              </li>
+              <li>
+                <span>Período</span>
+                <b>Intervalo personalizado</b>
+                <small>Confira se as datas cobrem todo o semestre.</small>
+              </li>
+              <li>
+                <span>Para finalizar</span>
+                <b>Obter URL do calendário</b>
+                <small>Não clique em “Exportar”: esse botão gera apenas um arquivo sem atualização automática.</small>
+              </li>
+            </ol>
+          </div>
           <form onSubmit={validateCalendar} className="form-row">
             <label>
               <span>URL dinâmica do calendário</span>

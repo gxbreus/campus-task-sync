@@ -125,3 +125,12 @@ test("onboarding preserva a guia e bloqueia campos ja concluidos", async () => {
   assert.match(source, /disabled=\{moodleState === "success"\}/);
   assert.match(source, /moodleState === "loading" \|\| moodleState === "success"/);
 });
+
+test("onboarding explica as opcoes corretas da exportacao do calendario", async () => {
+  const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
+
+  assert.match(source, /Todos os eventos/);
+  assert.match(source, /Intervalo personalizado/);
+  assert.match(source, /Obter URL do calendário/);
+  assert.match(source, /Não clique em “Exportar”/);
+});
