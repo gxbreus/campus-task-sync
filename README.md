@@ -10,6 +10,27 @@ Uma visão acessível das tecnologias e responsabilidades do sistema está no
 Consulte também a [política de privacidade e segurança](./PRIVACY.md) para
 entender quais dados saem do computador e como revogar os acessos.
 
+## Beta web
+
+Uma interface web está em desenvolvimento para substituir a configuração por
+terminal. O beta será hospedado com Next.js na Vercel e usará Supabase para
+persistência e sincronizações agendadas, ambos inicialmente nos planos gratuitos.
+
+O fluxo não terá cadastro próprio: o estudante conectará o Notion, colará a URL
+dinâmica do calendário e poderá obter o token Moodle diretamente no Campus pelo
+navegador. A senha institucional não passa pelo servidor do Campus Task Sync.
+
+Para executar a interface localmente:
+
+```bash
+npm install
+npm run web:dev
+```
+
+A implementação fica em `apps/web`. Consulte a
+[arquitetura do beta](./docs/ARQUITETURA-WEB-BETA.md) para conhecer o modelo de
+deploy, armazenamento e segurança.
+
 Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
 [guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull
 request e nunca publique tokens ou URLs privadas.

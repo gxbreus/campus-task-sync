@@ -10,3 +10,6 @@ token.json
 coverage/
 *.log
 .DS_Store
+.vercel/
+apps/web/.next/
+*.tsbuildinfo
