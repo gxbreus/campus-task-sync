@@ -180,11 +180,19 @@ test("rotas de acao nao devolvem mensagens internas de excecoes", async () => {
 });
 
 test("deploy da Vercel usa a saida do Next em vez de uma pasta publica", async () => {
-  const config = JSON.parse(await readFile("apps/web/vercel.json", "utf8")) as {
+  const appConfig = JSON.parse(await readFile("apps/web/vercel.json", "utf8")) as {
+    framework?: string;
+    outputDirectory?: string;
+  };
+  const rootConfig = JSON.parse(await readFile("vercel.json", "utf8")) as {
+    buildCommand?: string;
     framework?: string;
     outputDirectory?: string;
   };
 
-  assert.equal(config.framework, "nextjs");
-  assert.equal(config.outputDirectory, ".next");
+  assert.equal(appConfig.framework, "nextjs");
+  assert.equal(appConfig.outputDirectory, ".next");
+  assert.equal(rootConfig.framework, "nextjs");
+  assert.equal(rootConfig.buildCommand, "npm run web:build");
+  assert.equal(rootConfig.outputDirectory, "apps/web/.next");
 });
