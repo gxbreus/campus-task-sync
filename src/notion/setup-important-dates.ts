@@ -110,6 +110,7 @@ export async function setupImportantDatesPanel(options: Options): Promise<Import
               { name: "Inteligência Artificial", color: "purple" },
               { name: "Metodologia de Pesquisa", color: "blue" },
               { name: "Sistemas Gerenciadores de Banco de Dados", color: "orange" },
+              { name: "Grafos e suas Aplicações", color: "green" },
             ] } },
             Data: { date: {} },
             Tipo: { select: { options: [
