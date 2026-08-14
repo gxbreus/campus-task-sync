@@ -9,7 +9,8 @@ usada diariamente pelo estudante.
 - **Vercel Hobby:** hospeda a aplicação Next.js, as páginas e as rotas de API.
 - **Supabase Free:** guarda instalações, tokens criptografados e histórico das
   sincronizações.
-- **Supabase Cron:** chama uma rota protegida para iniciar as sincronizações.
+- **GitHub Actions:** chama uma rota protegida a cada 30 minutos para iniciar as
+  sincronizações do beta.
 - **Notion OAuth:** permite conectar um workspace e escolher uma página sem
   copiar manualmente um token.
 
@@ -55,6 +56,11 @@ Não haverá e-mail, senha ou perfil do Campus Task Sync.
 - IDs dos painéis criados;
 - resultado e horário da última sincronização.
 
+Planos de ensino em PDF são baixados temporariamente do Campus durante a
+sincronização. O texto é analisado em memória para identificar provas,
+trabalhos e outras avaliações; o arquivo e seu texto integral não são gravados
+no Supabase.
+
 Os tokens serão cifrados com AES-256-GCM antes de chegar ao banco. A chave ficará
 somente nas variáveis protegidas da Vercel. O banco não armazenará a senha do
 Campus nem o conteúdo integral das atividades.
@@ -65,9 +71,10 @@ Campus nem o conteúdo integral das atividades.
 2. Emissão direta e segura do token Moodle.
 3. OAuth público do Notion e sessão sem cadastro.
 4. Banco de instalações com tokens criptografados.
-5. Botões para criar painéis e sincronizar agora.
-6. Sincronização automática pelo agendador.
-7. Google Drive opcional.
+5. Botão único para estruturar tarefas, faltas e datas importantes, além da
+   sincronização manual.
+6. Sincronização automática por rota protegida e GitHub Actions.
+7. Google Drive opcional por OAuth próprio do usuário (próxima etapa).
 
 ## Limites do plano gratuito
 

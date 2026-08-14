@@ -1,4 +1,4 @@
-import type { ImportantDate } from "../plans/semester-2026-2.js";
+import type { ImportantDate } from "../plans/types.js";
 import { notionSelectValue } from "./select-value.js";
 
 const NOTION_API_VERSION = "2026-03-11";
@@ -9,7 +9,7 @@ type Options = {
   token: string;
   parentPageId: string;
   dates: ImportantDate[];
-  travel: { start: string; end: string };
+  travel?: { start: string; end: string };
   fetcher?: typeof fetch;
 };
 
@@ -37,12 +37,12 @@ function richTextValue(property: unknown): string | undefined {
   return text || undefined;
 }
 
-function overlapsTravel(date: ImportantDate, travel: Options["travel"]): boolean {
+function overlapsTravel(date: ImportantDate, travel: NonNullable<Options["travel"]>): boolean {
   return date.start <= travel.end && (date.end ?? date.start) >= travel.start;
 }
 
 function propertiesFor(date: ImportantDate, travel: Options["travel"]): JsonObject {
-  const duringTravel = overlapsTravel(date, travel);
+  const duringTravel = travel ? overlapsTravel(date, travel) : false;
   return {
     Evento: { title: [{ text: { content: date.title } }] },
     Disciplina: { select: { name: notionSelectValue(date.courseName) } },
@@ -51,7 +51,7 @@ function propertiesFor(date: ImportantDate, travel: Options["travel"]): JsonObje
     Peso: date.weight === undefined ? { number: null } : { number: date.weight },
     Conteúdo: { rich_text: date.content ? [{ text: { content: date.content } }] : [] },
     Observações: { rich_text: date.notes ? [{ text: { content: date.notes } }] : [] },
-    Viagem: { select: { name: duringTravel ? "✈️ Durante a viagem" : "Sem conflito" } },
+    ...(travel ? { Viagem: { select: { name: duringTravel ? "✈️ Durante a viagem" : "Sem conflito" } } } : {}),
     Fonte: { select: { name: "Plano de ensino" } },
     "ID externo": { rich_text: [{ text: { content: date.id } }] },
   };
@@ -94,6 +94,12 @@ export async function setupImportantDatesPanel(options: Options): Promise<Import
 
   let created = false;
   if (!databaseId) {
+    const courseOptions = [...new Set(options.dates.map((date) => notionSelectValue(date.courseName)))]
+      .sort((left, right) => left.localeCompare(right, "pt-BR"))
+      .map((name, index) => ({
+        name,
+        color: ["blue", "green", "orange", "purple", "pink", "yellow", "red", "brown", "gray"][index % 9],
+      }));
     const database = await request("/databases", {
       method: "POST",
       body: JSON.stringify({
@@ -103,15 +109,10 @@ export async function setupImportantDatesPanel(options: Options): Promise<Import
         icon: { type: "emoji", emoji: "🗓️" },
         is_inline: true,
         initial_data_source: {
-          title: [{ type: "text", text: { content: "Avaliações 2026/2" } }],
+          title: [{ type: "text", text: { content: "Avaliações" } }],
           properties: {
             Evento: { title: {} },
-            Disciplina: { select: { options: [
-              { name: "Inteligência Artificial", color: "purple" },
-              { name: "Metodologia de Pesquisa", color: "blue" },
-              { name: "Sistemas Gerenciadores de Banco de Dados", color: "orange" },
-              { name: "Grafos e suas Aplicações", color: "green" },
-            ] } },
+            Disciplina: { select: { options: courseOptions } },
             Data: { date: {} },
             Tipo: { select: { options: [
               { name: "Prova", color: "red" },
@@ -122,10 +123,12 @@ export async function setupImportantDatesPanel(options: Options): Promise<Import
             Peso: { number: { format: "number" } },
             Conteúdo: { rich_text: {} },
             Observações: { rich_text: {} },
-            Viagem: { select: { options: [
-              { name: "✈️ Durante a viagem", color: "red" },
-              { name: "Sem conflito", color: "green" },
-            ] } },
+            ...(options.travel ? {
+              Viagem: { select: { options: [
+                { name: "✈️ Durante a viagem", color: "red" },
+                { name: "Sem conflito", color: "green" },
+              ] } },
+            } : {}),
             Fonte: { select: { options: [{ name: "Plano de ensino", color: "gray" }] } },
             "ID externo": { rich_text: {} },
           },
@@ -199,7 +202,8 @@ export async function setupImportantDatesPanel(options: Options): Promise<Import
   if (typeof table?.id === "string") {
     const columns: Array<[string, number]> = [
       ["Disciplina", 260], ["Evento", 300], ["Data", 190], ["Tipo", 120], ["Peso", 90],
-      ["Viagem", 180], ["Conteúdo", 360], ["Observações", 420],
+      ...(options.travel ? [["Viagem", 180] as [string, number]] : []),
+      ["Conteúdo", 360], ["Observações", 420],
     ];
     await request(`/views/${table.id}`, {
       method: "PATCH",

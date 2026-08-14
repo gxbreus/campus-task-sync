@@ -5,6 +5,7 @@ export type WebServerConfig = {
   encryptionKey: string;
   notionClientId: string;
   notionClientSecret: string;
+  syncCronSecret?: string;
   supabaseSecretKey: string;
   supabaseUrl: string;
 };
@@ -37,6 +38,9 @@ export function loadWebServerConfig(): WebServerConfig {
     encryptionKey: required("APP_ENCRYPTION_KEY"),
     notionClientId: required("NOTION_OAUTH_CLIENT_ID"),
     notionClientSecret: required("NOTION_OAUTH_CLIENT_SECRET"),
+    ...(process.env.SYNC_CRON_SECRET?.trim()
+      ? { syncCronSecret: process.env.SYNC_CRON_SECRET.trim() }
+      : {}),
     supabaseSecretKey: required("SUPABASE_SECRET_KEY"),
     supabaseUrl: required("SUPABASE_URL"),
   };

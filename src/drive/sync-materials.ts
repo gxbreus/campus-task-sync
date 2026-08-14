@@ -1,5 +1,5 @@
 import type { MoodleActivity, MoodleCourseSummary } from "../moodle/client.js";
-import type { ImportantDate } from "../plans/semester-2026-2.js";
+import type { ImportantDate } from "../plans/types.js";
 import type { GoogleDriveDestination, UploadResult } from "./google-drive.js";
 
 type MaterialSource = {

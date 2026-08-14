@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 5
     env:
       GOOGLE_DRIVE_CONFIGURED: ${{ secrets.GOOGLE_CLIENT_ID != '' && secrets.GOOGLE_CLIENT_SECRET != '' && secrets.GOOGLE_REFRESH_TOKEN != '' }}
+      LOCAL_SYNC_CONFIGURED: ${{ secrets.CALENDAR_ICS_URL != '' && secrets.NOTION_TOKEN != '' && secrets.NOTION_DATA_SOURCE_ID != '' }}
+      WEB_SYNC_CONFIGURED: ${{ secrets.WEB_SYNC_CRON_SECRET != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -22,6 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run sync
+        if: ${{ env.LOCAL_SYNC_CONFIGURED == 'true' }}
         env:
           CALENDAR_ICS_URL: ${{ secrets.CALENDAR_ICS_URL }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
@@ -41,3 +44,8 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           GOOGLE_DRIVE_ROOT_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_ROOT_FOLDER_ID }}
+      - name: Sincronizar instalações do beta web
+        if: ${{ env.WEB_SYNC_CONFIGURED == 'true' }}
+        run: curl --fail-with-body --retry 2 --request POST --header "Authorization: Bearer $WEB_SYNC_CRON_SECRET" https://campus-task-sync.vercel.app/api/cron/sync
+        env:
+          WEB_SYNC_CRON_SECRET: ${{ secrets.WEB_SYNC_CRON_SECRET }}

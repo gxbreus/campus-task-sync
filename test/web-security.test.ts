@@ -117,11 +117,11 @@ test("OAuth do Notion usa state, cookies protegidos e tokens cifrados", async ()
   assert.doesNotMatch(callback, /console\.(log|debug|info|warn|error)/);
 });
 
-test("onboarding preserva a guia e bloqueia campos ja concluidos", async () => {
+test("onboarding retorna do Notion na mesma guia e bloqueia campos ja concluidos", async () => {
   const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
 
-  assert.match(source, /target="_blank"/);
-  assert.match(source, /rel="noopener noreferrer"/);
+  const notionButton = source.slice(source.indexOf("notion-button"), source.indexOf("notion-button") + 500);
+  assert.doesNotMatch(notionButton, /target="_blank"/);
   assert.match(source, /disabled=\{!notionConnected \|\| calendarState === "success"\}/);
   assert.match(source, /disabled=\{calendarState !== "success" \|\| moodleState === "success"\}/);
   assert.match(source, /moodleState === "loading" \|\| moodleState === "success"/);
@@ -140,10 +140,20 @@ test("etapa final usa as rotas reais e deixa de ser um prototipo desabilitado", 
   const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
 
   assert.match(source, /technicalStepsReady = notionConnected/);
-  assert.match(source, /\/api\/panels\/tasks/);
-  assert.match(source, /\/api\/panels\/attendance/);
+  assert.match(source, /\/api\/panels\/structure/);
   assert.match(source, /\/api\/sync/);
+  assert.match(source, /Estruturar Notion/);
   assert.doesNotMatch(source, /Substitui setup:|Substitui npm run/);
+});
+
+test("sincronização agendada exige segredo e atualiza planos de ensino", async () => {
+  const cron = await readFile("apps/web/app/api/cron/sync/route.ts", "utf8");
+  const sync = await readFile("apps/web/lib/server/web-sync.ts", "utf8");
+
+  assert.match(cron, /timingSafeEqual/);
+  assert.match(cron, /synchronizeReadyInstallations/);
+  assert.match(sync, /discoverTeachingPlans/);
+  assert.match(sync, /setupImportantDatesForRuntime/);
 });
 
 test("calendario e token do Campus sao persistidos somente cifrados", async () => {
