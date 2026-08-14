@@ -110,10 +110,17 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
             className={`button primary notion-button ${notionConfigured ? "" : "disabled"}`}
             href={notionConfigured ? "/api/notion/connect" : undefined}
             aria-disabled={!notionConfigured}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             {notionConnected ? "Reconectar ao Notion" : "Conectar ao Notion"}
           </a>
           {!notionConfigured && <p className="hint">A integração pública ainda precisa ser configurada na Vercel.</p>}
+          {notionConfigured && !notionConnected && (
+            <p className="hint">
+              A autorização abrirá em outra guia. No celular, mantenha o fluxo no navegador caso o aplicativo do Notion abra somente a página inicial.
+            </p>
+          )}
           {notionError && <p className="feedback error">A autorização não foi concluída. Tente novamente e escolha uma página do Notion.</p>}
           {notionConnected && <p className="feedback success">Workspace autorizado e token protegido com criptografia.</p>}
         </div>
@@ -139,10 +146,15 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                 placeholder="https://campusvirtual.ufla.br/..."
                 required
                 autoComplete="off"
+                disabled={calendarState === "success"}
               />
             </label>
-            <button className="button secondary" disabled={calendarState === "loading"}>
-              {calendarState === "loading" ? "Validando..." : "Validar calendário"}
+            <button className="button secondary" disabled={calendarState === "loading" || calendarState === "success"}>
+              {calendarState === "loading"
+                ? "Validando..."
+                : calendarState === "success"
+                  ? "Calendário validado"
+                  : "Validar calendário"}
             </button>
           </form>
           {calendarMessage && <p className={`feedback ${calendarState}`}>{calendarMessage}</p>}
@@ -163,14 +175,31 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
           <form onSubmit={obtainMoodleToken} className="credentials-form">
             <label>
               <span>Usuário institucional</span>
-              <input value={username} onChange={(event) => setUsername(event.target.value)} required autoComplete="username" />
+              <input
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+                autoComplete="username"
+                disabled={moodleState === "success"}
+              />
             </label>
             <label>
               <span>Senha do Campus</span>
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" />
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoComplete="current-password"
+                disabled={moodleState === "success"}
+              />
             </label>
-            <button className="button secondary" disabled={moodleState === "loading"}>
-              {moodleState === "loading" ? "Conectando..." : "Obter token com segurança"}
+            <button className="button secondary" disabled={moodleState === "loading" || moodleState === "success"}>
+              {moodleState === "loading"
+                ? "Conectando..."
+                : moodleState === "success"
+                  ? "Token obtido"
+                  : "Obter token com segurança"}
             </button>
           </form>
           {moodleMessage && <p className={`feedback ${moodleState}`}>{moodleMessage}</p>}
