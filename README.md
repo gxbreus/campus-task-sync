@@ -214,7 +214,7 @@ O comando abaixo **não é genérico neste momento**:
 npm run setup:important-dates
 ```
 
-Ele contém os planos de ensino de GCC128, GCC175 e GCC220 de 2026/2 e as datas
+Ele contém os planos de ensino de GCC128, GCC175, GCC220 e GCC262 de 2026/2 e as datas
 de uma viagem específica do autor do projeto. Outro usuário não deve executá-lo
 sem antes substituir os dados em `src/plans/semester-2026-2.ts` pelos próprios
 planos, avaliações e ausências planejadas.
