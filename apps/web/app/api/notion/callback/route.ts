@@ -7,11 +7,11 @@ import { loadWebServerConfig } from "@/lib/server/config";
 import { createOpaqueToken, encryptSecret, hashOpaqueToken } from "@/lib/server/crypto";
 import { saveNotionInstallation } from "@/lib/server/installations";
 import { exchangeNotionCode } from "@/lib/server/notion-oauth";
+import { INSTALLATION_COOKIE } from "@/lib/server/session";
 
 export const runtime = "nodejs";
 
 const OAUTH_STATE_COOKIE = "cts_notion_oauth_state";
-const INSTALLATION_COOKIE = "cts_installation";
 
 function sameState(received: string | null, expected: string | undefined): boolean {
   if (!received || !expected) return false;

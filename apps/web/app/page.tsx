@@ -1,5 +1,7 @@
 import { SetupWizard } from "@/components/setup-wizard";
-import { isNotionOAuthConfigured } from "@/lib/server/config";
+import { isNotionOAuthConfigured, loadWebServerConfig } from "@/lib/server/config";
+import { findInstallation } from "@/lib/server/installations";
+import { installationToken } from "@/lib/server/session";
 
 type HomeProps = {
   searchParams: Promise<{ notion?: string }>;
@@ -7,6 +9,20 @@ type HomeProps = {
 
 export default async function Home({ searchParams }: HomeProps) {
   const { notion } = await searchParams;
+  let savedInstallation:
+    | Awaited<ReturnType<typeof findInstallation>>
+    | undefined;
+  if (isNotionOAuthConfigured()) {
+    const token = await installationToken();
+    if (token) {
+      try {
+        savedInstallation = await findInstallation(loadWebServerConfig(), token);
+      } catch {
+        savedInstallation = undefined;
+      }
+    }
+  }
+  const notionConnected = Boolean(savedInstallation) || notion === "connected";
   return (
     <main>
       <header className="hero">
@@ -31,8 +47,11 @@ export default async function Home({ searchParams }: HomeProps) {
       </header>
       <SetupWizard
         notionConfigured={isNotionOAuthConfigured()}
-        notionConnected={notion === "connected"}
+        notionConnected={notionConnected}
         notionError={notion === "error"}
+        calendarConnected={Boolean(savedInstallation?.calendarUrlEncrypted)}
+        moodleConnected={Boolean(savedInstallation?.moodleTokenEncrypted)}
+        taskPanelCreated={Boolean(savedInstallation?.notionDataSourceId)}
       />
       <footer className="site-footer">
         <p>Projeto open source e sem vínculo oficial com a UFLA.</p>
