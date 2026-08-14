@@ -15,7 +15,9 @@ entender quais dados saem do computador e como revogar os acessos.
 Uma interface web está em desenvolvimento para substituir a configuração por
 terminal. A versão inicial está publicada em
 [campus-task-sync.vercel.app](https://campus-task-sync.vercel.app/) com Next.js
-na Vercel. A persistência e as sincronizações agendadas ainda não estão ativas.
+na Vercel. A conexão pública do Notion possui implementação OAuth segura; a
+persistência do calendário/Moodle e as sincronizações agendadas são a próxima
+etapa.
 
 O fluxo não terá cadastro próprio: o estudante conectará o Notion, colará a URL
 dinâmica do calendário e poderá obter o token Moodle diretamente no Campus pelo
@@ -33,6 +35,9 @@ A implementação fica em `apps/web`. Consulte a
 deploy, armazenamento e segurança, e a
 [auditoria do beta web](./docs/AUDITORIA-SEGURANCA-WEB.md) para ver os controles
 já testados e as limitações conhecidas.
+
+Quem administra o deploy deve seguir a
+[ativação do OAuth do Notion](./docs/ATIVAR-NOTION-OAUTH.md).
 
 Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
 [guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull

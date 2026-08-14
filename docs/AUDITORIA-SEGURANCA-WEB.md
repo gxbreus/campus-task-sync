@@ -11,8 +11,11 @@ uma certificação independente nem garante ausência absoluta de vulnerabilidad
   `campusvirtual.ufla.br` por HTTPS;
 - a aplicação não envia a senha para sua API e não a registra em logs;
 - a URL do calendário chega à API apenas para validação e não é persistida;
-- o beta não usa banco, cookies ou mecanismos persistentes do navegador;
-- o token emitido pelo Campus é validado e descartado pela interface atual;
+- o beta não usa armazenamento acessível por JavaScript no navegador;
+- a instalação usa apenas um cookie aleatório `HttpOnly`, `Secure` e
+  `SameSite=Lax`, cujo hash é associado aos dados no banco;
+- tokens do Notion são cifrados com AES-256-GCM antes de chegar ao Supabase;
+- o token emitido pelo Campus ainda é validado e descartado pela interface;
 - não existem analytics, anúncios ou scripts de rastreamento.
 
 ## Proteções verificadas
@@ -36,16 +39,20 @@ uma certificação independente nem garante ausência absoluta de vulnerabilidad
 
 O Chrome foi executado com emulação de tela de 390 por 844 pixels e toque
 habilitado. O teste confirmou ausência de rolagem horizontal, ausência de
-armazenamento persistente e alvos interativos de pelo menos 44 pixels. Os campos
+ausência de armazenamento acessível por JavaScript e alvos interativos de pelo
+menos 44 pixels. Os campos
 usam fonte de 16 pixels no celular para evitar zoom automático no iOS.
 
 ## Limitações e próximos controles
 
 - a CSP ainda permite estilos e scripts inline exigidos pela renderização atual
   do Next.js; origens externas continuam bloqueadas;
-- o OAuth do Notion e a sincronização automática ainda não estão ativos;
-- quando tokens passarem a ser persistidos, serão necessários testes adicionais
-  de criptografia, isolamento entre instalações, revogação e exclusão de dados;
+- o OAuth do Notion depende das chaves e da migração do Supabase configuradas no
+  ambiente de produção;
+- a persistência do calendário/Moodle e a sincronização automática ainda não
+  estão ativas;
+- antes de abrir o sincronizador, são necessários testes adicionais de
+  isolamento entre instalações, revogação e rotação da chave de criptografia;
 - deve ser publicada na Vercel uma regra de rate limit para
   `POST /api/calendar/validate` antes de divulgar o beta amplamente;
 - uma revisão externa continua recomendada antes de tratar o sistema como
