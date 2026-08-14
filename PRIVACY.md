@@ -15,25 +15,28 @@ somente o hash SHA-256 desse identificador. A aplicação não usa `localStorage
 
 A senha institucional é enviada pelo navegador diretamente ao endereço HTTPS
 oficial do Campus Virtual. Ela não passa pela Vercel nem pela API do Campus Task
-Sync. Depois da validação, usuário e senha são removidos do estado da página. O
-token do Moodle só será persistido quando o estudante confirmar a ativação da
-sincronização; a senha nunca será persistida.
+Sync. Depois da validação, usuário e senha são removidos do estado da página.
+Somente o token emitido pelo Campus é enviado ao servidor e persistido com
+criptografia para permitir as próximas sincronizações; a senha nunca é
+persistida.
 
 A URL privada do calendário passa temporariamente pela rota de validação da
 aplicação, pois o Campus não permite que o navegador consulte diretamente essa
 exportação. A aplicação confere domínio e caminho, limita tamanho e tempo da
-requisição, não segue redirecionamentos e não registra o conteúdo ou a URL em
-logs próprios. A Vercel e o Campus Virtual ainda processam metadados técnicos de
-rede conforme as políticas de cada serviço.
+requisição e não segue redirecionamentos. Depois da validação, a URL é
+persistida com criptografia para que o usuário não precise colá-la novamente. O
+projeto não registra o conteúdo ou a URL em logs próprios. A Vercel, o Supabase
+e o Campus Virtual ainda processam metadados técnicos de rede conforme as
+políticas de cada serviço.
 
 ## Dados persistidos no beta web
 
 O OAuth do Notion guarda no Supabase os identificadores do workspace e do bot,
-além dos tokens de acesso e renovação criptografados com AES-256-GCM. A chave de
-criptografia fica separada no cofre de variáveis da Vercel. A próxima etapa da
-automação guardará também a URL privada do calendário e, se autorizado, o token
-do Moodle, sempre criptografados. O conteúdo integral das atividades não é
-mantido no banco do serviço.
+além dos tokens de acesso e renovação criptografados com AES-256-GCM. A URL
+privada do calendário e o token do Moodle também são criptografados. A chave de
+criptografia fica separada no cofre de variáveis da Vercel. O identificador da
+base de tarefas criada no Notion é guardado para as atualizações seguintes. O
+conteúdo integral das atividades não é mantido no banco do serviço.
 
 ## Dados utilizados
 

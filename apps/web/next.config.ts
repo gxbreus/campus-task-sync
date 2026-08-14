@@ -10,7 +10,7 @@ const contentSecurityPolicy = [
   "font-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://api.notion.com",
   "frame-ancestors 'none'",
   ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
@@ -34,6 +34,14 @@ export const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"],
+    };
+    return config;
+  },
   async headers() {
     return [
       {

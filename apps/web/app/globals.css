@@ -211,7 +211,9 @@ input:disabled { cursor: not-allowed; color: var(--muted); background: #f0f4f2; 
 .token-ready { margin: 8px 0 0; color: var(--muted); font-size: .76rem; }
 
 .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.action-card { min-height: 110px; padding: 16px; display: grid; gap: 4px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); opacity: .6; }
+.action-card { min-height: 110px; padding: 16px; display: grid; gap: 4px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); cursor: pointer; }
+.action-card:disabled { cursor: not-allowed; opacity: .6; }
+.action-card:not(:disabled):hover { border-color: #9fc4bb; background: #f5faf8; }
 .action-card span { color: var(--green); font-size: 1.25rem; }
 .action-card small { color: var(--muted); }
 

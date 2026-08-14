@@ -88,6 +88,7 @@ test("envia headers contra injecao, clickjacking e recursos desnecessarios", () 
   assert.match(headers.get("content-security-policy") ?? "", /default-src 'self'/);
   assert.match(headers.get("content-security-policy") ?? "", /connect-src 'self' https:\/\/campusvirtual\.ufla\.br/);
   assert.match(headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  assert.match(headers.get("content-security-policy") ?? "", /form-action 'self' https:\/\/api\.notion\.com/);
   assert.equal(headers.get("x-frame-options"), "DENY");
   assert.equal(headers.get("x-content-type-options"), "nosniff");
   assert.equal(headers.get("referrer-policy"), "no-referrer");
@@ -121,8 +122,8 @@ test("onboarding preserva a guia e bloqueia campos ja concluidos", async () => {
 
   assert.match(source, /target="_blank"/);
   assert.match(source, /rel="noopener noreferrer"/);
-  assert.match(source, /disabled=\{calendarState === "success"\}/);
-  assert.match(source, /disabled=\{moodleState === "success"\}/);
+  assert.match(source, /disabled=\{!notionConnected \|\| calendarState === "success"\}/);
+  assert.match(source, /disabled=\{calendarState !== "success" \|\| moodleState === "success"\}/);
   assert.match(source, /moodleState === "loading" \|\| moodleState === "success"/);
 });
 
@@ -133,4 +134,65 @@ test("onboarding explica as opcoes corretas da exportacao do calendario", async 
   assert.match(source, /Intervalo personalizado/);
   assert.match(source, /Obter URL do calendário/);
   assert.match(source, /Não clique em “Exportar”/);
+});
+
+test("etapa final usa as rotas reais e deixa de ser um prototipo desabilitado", async () => {
+  const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
+
+  assert.match(source, /technicalStepsReady = notionConnected/);
+  assert.match(source, /\/api\/panels\/tasks/);
+  assert.match(source, /\/api\/panels\/attendance/);
+  assert.match(source, /\/api\/sync/);
+  assert.doesNotMatch(source, /Substitui setup:|Substitui npm run/);
+});
+
+test("calendario e token do Campus sao persistidos somente cifrados", async () => {
+  const calendar = await readFile("apps/web/app/api/onboarding/calendar/route.ts", "utf8");
+  const moodle = await readFile("apps/web/app/api/onboarding/moodle/route.ts", "utf8");
+  const installations = await readFile("apps/web/lib/server/installations.ts", "utf8");
+
+  assert.match(calendar, /calendarUrlEncrypted: encryptSecret/);
+  assert.match(moodle, /moodleTokenEncrypted: encryptSecret/);
+  assert.match(installations, /calendar_url_encrypted/);
+  assert.match(installations, /moodle_token_encrypted/);
+  assert.doesNotMatch(moodle, /password|senha/i);
+});
+
+test("OAuth movel usa envio no navegador e oferece copia sem redirecionamento automatico", async () => {
+  const connect = await readFile("apps/web/app/api/notion/connect/route.ts", "utf8");
+
+  assert.match(connect, /<form method="get"/);
+  assert.match(connect, /Continuar no navegador/);
+  assert.match(connect, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(connect, /window\.location/);
+});
+
+test("rotas de acao nao devolvem mensagens internas de excecoes", async () => {
+  for (const route of [
+    "apps/web/app/api/panels/tasks/route.ts",
+    "apps/web/app/api/panels/attendance/route.ts",
+    "apps/web/app/api/sync/route.ts",
+  ]) {
+    const source = await readFile(route, "utf8");
+    assert.doesNotMatch(source, /error instanceof Error \? error\.message/);
+    assert.match(source, /error instanceof WebRequestError/);
+  }
+});
+
+test("deploy da Vercel usa a saida do Next em vez de uma pasta publica", async () => {
+  const appConfig = JSON.parse(await readFile("apps/web/vercel.json", "utf8")) as {
+    framework?: string;
+    outputDirectory?: string;
+  };
+  const rootConfig = JSON.parse(await readFile("vercel.json", "utf8")) as {
+    buildCommand?: string;
+    framework?: string;
+    outputDirectory?: string;
+  };
+
+  assert.equal(appConfig.framework, "nextjs");
+  assert.equal(appConfig.outputDirectory, ".next");
+  assert.equal(rootConfig.framework, "nextjs");
+  assert.equal(rootConfig.buildCommand, "npm run web:build");
+  assert.equal(rootConfig.outputDirectory, "apps/web/.next");
 });
