@@ -46,6 +46,9 @@ jobs:
           GOOGLE_DRIVE_ROOT_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_ROOT_FOLDER_ID }}
       - name: Sincronizar instalações do beta web
         if: ${{ env.WEB_SYNC_CONFIGURED == 'true' }}
-        run: curl --fail-with-body --retry 2 --request POST --header "Authorization: Bearer $WEB_SYNC_CRON_SECRET" https://campus-task-sync.vercel.app/api/cron/sync
+        run: >-
+          curl --fail-with-body --retry 2 --request POST
+          --header "Authorization: Bearer $WEB_SYNC_CRON_SECRET"
+          https://campus-task-sync.vercel.app/api/cron/sync
         env:
           WEB_SYNC_CRON_SECRET: ${{ secrets.WEB_SYNC_CRON_SECRET }}
