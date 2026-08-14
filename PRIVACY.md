@@ -1,8 +1,37 @@
 # Privacidade e segurança
 
-O Campus Task Sync é executado no computador ou no repositório GitHub do próprio
-usuário. O projeto não possui servidor central e o mantenedor não recebe
-automaticamente credenciais, tarefas ou materiais de quem clona ou cria um fork.
+O Campus Task Sync pode ser executado no computador ou no repositório GitHub do
+próprio usuário. O beta web também possui uma interface hospedada na Vercel. No
+uso local, o mantenedor não recebe automaticamente credenciais, tarefas ou
+materiais de quem clona ou cria um fork.
+
+## Beta web atual
+
+Na etapa atual, o beta web não possui banco de dados, cadastro de usuário ou
+rotina de sincronização em segundo plano. O código da aplicação não grava
+cookies, `localStorage`, `sessionStorage` ou IndexedDB. Recarregar a página
+descarta o andamento da configuração.
+
+A senha institucional é enviada pelo navegador diretamente ao endereço HTTPS
+oficial do Campus Virtual. Ela não passa pela Vercel nem pela API do Campus Task
+Sync. Depois da validação, usuário, senha e token são removidos do estado da
+página.
+
+A URL privada do calendário passa temporariamente pela rota de validação da
+aplicação, pois o Campus não permite que o navegador consulte diretamente essa
+exportação. A aplicação confere domínio e caminho, limita tamanho e tempo da
+requisição, não segue redirecionamentos e não registra o conteúdo ou a URL em
+logs próprios. A Vercel e o Campus Virtual ainda processam metadados técnicos de
+rede conforme as políticas de cada serviço.
+
+## Automação web futura
+
+Uma sincronização automática não é possível sem persistir as credenciais que
+permitem consultar o Campus e atualizar o Notion. Antes de ativar essa etapa, o
+beta informará claramente quais dados serão guardados e pedirá autorização. A
+arquitetura prevista armazena apenas identificadores e tokens necessários,
+criptografados com AES-256-GCM; nunca a senha institucional nem o conteúdo
+integral das atividades.
 
 ## Dados utilizados
 

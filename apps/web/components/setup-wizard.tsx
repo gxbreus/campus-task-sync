@@ -15,7 +15,7 @@ export function SetupWizard() {
   const [password, setPassword] = useState("");
   const [moodleState, setMoodleState] = useState<State>("idle");
   const [moodleMessage, setMoodleMessage] = useState("");
-  const [moodleToken, setMoodleToken] = useState("");
+  const [moodleTokenReady, setMoodleTokenReady] = useState(false);
 
   const completed = useMemo(
     () => Number(calendarState === "success") + Number(moodleState === "success"),
@@ -34,7 +34,7 @@ export function SetupWizard() {
       });
       const result = (await response.json()) as { valid: boolean; events?: number; message?: string };
       if (!response.ok || !result.valid) throw new Error(result.message ?? "URL inválida.");
-      sessionStorage.setItem("campus-calendar-url", calendar.trim());
+      setCalendar("");
       setCalendarState("success");
       setCalendarMessage(
         result.events === 1 ? "Calendário válido · 1 evento encontrado" : `Calendário válido · ${result.events ?? 0} eventos encontrados`,
@@ -63,11 +63,11 @@ export function SetupWizard() {
       if (!response.ok || !result.token) {
         throw new Error(result.error ?? "O Campus não emitiu o token. Confira usuário e senha.");
       }
-      setMoodleToken(result.token);
-      sessionStorage.setItem("campus-moodle-token", result.token);
+      setMoodleTokenReady(true);
+      setUsername("");
       setPassword("");
       setMoodleState("success");
-      setMoodleMessage("Token emitido diretamente pelo Campus. Sua senha foi descartada.");
+      setMoodleMessage("Token validado diretamente com o Campus e descartado por este beta.");
     } catch (error) {
       setPassword("");
       setMoodleState("error");
@@ -142,7 +142,7 @@ export function SetupWizard() {
           </div>
           <div className="security-note">
             <strong>Sua senha não passa pelo Campus Task Sync.</strong>
-            <span>O navegador a envia diretamente ao Campus Virtual por HTTPS e a descarta após gerar o token.</span>
+            <span>O navegador a envia diretamente ao Campus Virtual por HTTPS. Este beta não usa banco, cookies nem armazenamento local para guardar seus dados.</span>
           </div>
           <form onSubmit={obtainMoodleToken} className="credentials-form">
             <label>
@@ -158,7 +158,7 @@ export function SetupWizard() {
             </button>
           </form>
           {moodleMessage && <p className={`feedback ${moodleState}`}>{moodleMessage}</p>}
-          {moodleToken && <p className="token-ready">Token mantido apenas nesta sessão até a conexão segura do Notion.</p>}
+          {moodleTokenReady && <p className="token-ready">A senha, o usuário e o token foram removidos da página após a validação.</p>}
         </div>
       </article>
 

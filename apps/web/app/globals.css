@@ -27,7 +27,7 @@ body {
 }
 
 button, input { font: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
+button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 
@@ -147,7 +147,7 @@ main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 .button.secondary { color: var(--green-dark); background: var(--green-soft); }
 .button:disabled { cursor: not-allowed; opacity: .55; }
 .hint { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
-.text-link { display: inline-block; margin-bottom: 16px; color: var(--green); font-weight: 800; text-decoration: none; }
+.text-link { min-height: 44px; display: inline-flex; align-items: center; margin-bottom: 8px; color: var(--green); font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
 
 label { min-width: 0; display: grid; gap: 7px; color: var(--ink); font-size: .8rem; font-weight: 750; }
@@ -182,8 +182,9 @@ input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 107, 95
   font-size: .8rem;
 }
 .site-footer p { margin: 0 0 8px; }
-.site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 12px; }
-.site-footer a { color: var(--green); font-weight: 750; text-underline-offset: 3px; }
+.site-footer nav { display: grid; justify-items: center; gap: 0; }
+.developer-credit { display: flex; align-items: center; gap: 4px; }
+.site-footer a { min-height: 44px; padding: 0 4px; display: inline-flex; align-items: center; color: var(--green); font-weight: 750; text-underline-offset: 3px; }
 .site-footer a:hover { color: var(--green-dark); }
 .site-footer a:focus-visible { border-radius: 4px; outline: 3px solid rgba(22, 107, 95, .2); outline-offset: 3px; }
 
@@ -205,6 +206,7 @@ input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 107, 95
   .step-title { display: block; }
   .status { display: inline-block; margin-bottom: 14px; }
   .form-row, .credentials-form, .action-grid { grid-template-columns: 1fr; }
+  input { font-size: 1rem; }
   .button { width: 100%; }
 }
 
