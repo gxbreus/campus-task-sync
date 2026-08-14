@@ -8,20 +8,36 @@ const CAMPUS_CALENDAR_URL = "https://campusvirtual.ufla.br/presencial/calendar/e
 const MOODLE_TOKEN_URL = "https://campusvirtual.ufla.br/presencial/login/token.php";
 
 type SetupWizardProps = {
+  calendarConnected: boolean;
+  moodleConnected: boolean;
   notionConfigured: boolean;
   notionConnected: boolean;
   notionError: boolean;
+  taskPanelCreated: boolean;
 };
 
-export function SetupWizard({ notionConfigured, notionConnected, notionError }: SetupWizardProps) {
+type ActionName = "tasks" | "attendance" | "sync";
+
+export function SetupWizard({
+  calendarConnected,
+  moodleConnected,
+  notionConfigured,
+  notionConnected,
+  notionError,
+  taskPanelCreated,
+}: SetupWizardProps) {
   const [calendar, setCalendar] = useState("");
-  const [calendarState, setCalendarState] = useState<State>("idle");
-  const [calendarMessage, setCalendarMessage] = useState("");
+  const [calendarState, setCalendarState] = useState<State>(calendarConnected ? "success" : "idle");
+  const [calendarMessage, setCalendarMessage] = useState(calendarConnected ? "Calendário protegido e pronto para sincronizar." : "");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [moodleState, setMoodleState] = useState<State>("idle");
-  const [moodleMessage, setMoodleMessage] = useState("");
-  const [moodleTokenReady, setMoodleTokenReady] = useState(false);
+  const [moodleState, setMoodleState] = useState<State>(moodleConnected ? "success" : "idle");
+  const [moodleMessage, setMoodleMessage] = useState(moodleConnected ? "Token protegido e pronto para sincronizar." : "");
+  const [moodleTokenReady, setMoodleTokenReady] = useState(moodleConnected);
+  const [panelReady, setPanelReady] = useState(taskPanelCreated);
+  const [actionLoading, setActionLoading] = useState<ActionName>();
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState(false);
 
   const completed = useMemo(
     () => Number(notionConnected) + Number(calendarState === "success") + Number(moodleState === "success"),
@@ -33,7 +49,7 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
     setCalendarState("loading");
     setCalendarMessage("");
     try {
-      const response = await fetch("/api/calendar/validate", {
+      const response = await fetch("/api/onboarding/calendar", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: calendar }),
@@ -69,17 +85,57 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
       if (!response.ok || !result.token) {
         throw new Error(result.error ?? "O Campus não emitiu o token. Confira usuário e senha.");
       }
+      const saveResponse = await fetch("/api/onboarding/moodle", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: result.token }),
+      });
+      const saved = (await saveResponse.json()) as { saved?: boolean; message?: string };
+      if (!saveResponse.ok || !saved.saved) {
+        throw new Error(saved.message ?? "Não foi possível proteger o token do Campus.");
+      }
       setMoodleTokenReady(true);
       setUsername("");
       setPassword("");
       setMoodleState("success");
-      setMoodleMessage("Token validado diretamente com o Campus e descartado por este beta.");
+      setMoodleMessage("Token validado e protegido para as próximas sincronizações.");
     } catch (error) {
       setPassword("");
       setMoodleState("error");
       setMoodleMessage(error instanceof Error ? error.message : "Não foi possível obter o token.");
     }
   }
+
+  async function executeAction(action: ActionName, endpoint: string) {
+    setActionLoading(action);
+    setActionMessage("");
+    setActionError(false);
+    try {
+      const response = await fetch(endpoint, { method: "POST" });
+      const result = (await response.json()) as {
+        calendarTasks?: number;
+        courses?: number;
+        message?: string;
+        tasksFound?: number;
+      };
+      if (!response.ok) throw new Error(result.message ?? "Não foi possível concluir esta ação.");
+      if (action === "tasks") {
+        setPanelReady(true);
+        setActionMessage(`Painel criado. ${result.tasksFound ?? 0} atividades encontradas.`);
+      } else if (action === "attendance") {
+        setActionMessage(`Controle de faltas criado para ${result.courses ?? 0} disciplinas.`);
+      } else {
+        setActionMessage(`Sincronização concluída com ${result.calendarTasks ?? 0} atividades.`);
+      }
+    } catch (error) {
+      setActionError(true);
+      setActionMessage(error instanceof Error ? error.message : "Não foi possível concluir esta ação.");
+    } finally {
+      setActionLoading(undefined);
+    }
+  }
+
+  const technicalStepsReady = notionConnected && calendarState === "success" && moodleState === "success";
 
   return (
     <section className="wizard" aria-label="Configuração do Campus Task Sync">
@@ -165,10 +221,10 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                 placeholder="https://campusvirtual.ufla.br/..."
                 required
                 autoComplete="off"
-                disabled={calendarState === "success"}
+                disabled={!notionConnected || calendarState === "success"}
               />
             </label>
-            <button className="button secondary" disabled={calendarState === "loading" || calendarState === "success"}>
+            <button className="button secondary" disabled={!notionConnected || calendarState === "loading" || calendarState === "success"}>
               {calendarState === "loading"
                 ? "Validando..."
                 : calendarState === "success"
@@ -176,6 +232,7 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                   : "Validar calendário"}
             </button>
           </form>
+          {!notionConnected && <p className="hint">Conecte o Notion para liberar esta etapa.</p>}
           {calendarMessage && <p className={`feedback ${calendarState}`}>{calendarMessage}</p>}
         </div>
       </article>
@@ -189,7 +246,7 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
           </div>
           <div className="security-note">
             <strong>Sua senha não passa pelo Campus Task Sync.</strong>
-            <span>O navegador a envia diretamente ao Campus Virtual por HTTPS. A senha nunca é salva; somente os tokens autorizados são protegidos com criptografia para viabilizar a sincronização.</span>
+            <span>O navegador envia a senha diretamente ao Campus Virtual por HTTPS. A senha nunca é salva; somente o token emitido pelo Campus é enviado ao servidor e protegido com criptografia.</span>
           </div>
           <form onSubmit={obtainMoodleToken} className="credentials-form">
             <label>
@@ -199,7 +256,7 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                 onChange={(event) => setUsername(event.target.value)}
                 required
                 autoComplete="username"
-                disabled={moodleState === "success"}
+                disabled={calendarState !== "success" || moodleState === "success"}
               />
             </label>
             <label>
@@ -210,10 +267,10 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                 onChange={(event) => setPassword(event.target.value)}
                 required
                 autoComplete="current-password"
-                disabled={moodleState === "success"}
+                disabled={calendarState !== "success" || moodleState === "success"}
               />
             </label>
-            <button className="button secondary" disabled={moodleState === "loading" || moodleState === "success"}>
+            <button className="button secondary" disabled={calendarState !== "success" || moodleState === "loading" || moodleState === "success"}>
               {moodleState === "loading"
                 ? "Conectando..."
                 : moodleState === "success"
@@ -221,23 +278,39 @@ export function SetupWizard({ notionConfigured, notionConnected, notionError }: 
                   : "Obter token com segurança"}
             </button>
           </form>
+          {calendarState !== "success" && <p className="hint">Valide o calendário para liberar esta etapa.</p>}
           {moodleMessage && <p className={`feedback ${moodleState}`}>{moodleMessage}</p>}
-          {moodleTokenReady && <p className="token-ready">A senha, o usuário e o token foram removidos da página após a validação.</p>}
+          {moodleTokenReady && <p className="token-ready">A senha e o usuário foram removidos da página. O token cifrado permite sincronizar sem pedir login novamente.</p>}
         </div>
       </article>
 
-      <article className="step locked">
+      <article className={`step ${technicalStepsReady ? "current" : "locked"}`}>
         <div className="step-number">4</div>
         <div className="step-content">
           <div className="step-title">
             <div><h3>Crie e sincronize seus painéis</h3><p>Tarefas, faltas e datas importantes em poucos cliques.</p></div>
-            <span className="status waiting">Aguardando etapas</span>
+            <span className={`status ${technicalStepsReady ? "success" : "waiting"}`}>
+              {technicalStepsReady ? "Pronto para criar" : "Aguardando etapas"}
+            </span>
           </div>
           <div className="action-grid">
-            <button className="action-card" disabled><span>✓</span><strong>Criar painel de tarefas</strong><small>Substitui setup:notion</small></button>
-            <button className="action-card" disabled><span>▦</span><strong>Criar controle de faltas</strong><small>Substitui setup:attendance</small></button>
-            <button className="action-card" disabled><span>↻</span><strong>Sincronizar agora</strong><small>Substitui npm run sync</small></button>
+            <button
+              className="action-card"
+              disabled={!technicalStepsReady || Boolean(actionLoading)}
+              onClick={() => executeAction("tasks", "/api/panels/tasks")}
+            ><span>✓</span><strong>{actionLoading === "tasks" ? "Criando painel..." : panelReady ? "Atualizar painel de tarefas" : "Criar painel de tarefas"}</strong><small>Cria a base e as visualizações no Notion</small></button>
+            <button
+              className="action-card"
+              disabled={!technicalStepsReady || Boolean(actionLoading)}
+              onClick={() => executeAction("attendance", "/api/panels/attendance")}
+            ><span>▦</span><strong>{actionLoading === "attendance" ? "Criando controle..." : "Criar controle de faltas"}</strong><small>Calcula o limite pelos créditos</small></button>
+            <button
+              className="action-card"
+              disabled={!technicalStepsReady || !panelReady || Boolean(actionLoading)}
+              onClick={() => executeAction("sync", "/api/sync")}
+            ><span>↻</span><strong>{actionLoading === "sync" ? "Sincronizando..." : "Sincronizar agora"}</strong><small>{panelReady ? "Atualiza as pendências do Campus" : "Crie primeiro o painel de tarefas"}</small></button>
           </div>
+          {actionMessage && <p className={`feedback ${actionError ? "error" : "success"}`}>{actionMessage}</p>}
         </div>
       </article>
     </section>

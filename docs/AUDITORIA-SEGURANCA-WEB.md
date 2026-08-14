@@ -10,12 +10,14 @@ uma certificação independente nem garante ausência absoluta de vulnerabilidad
 - a senha institucional sai do navegador diretamente para
   `campusvirtual.ufla.br` por HTTPS;
 - a aplicação não envia a senha para sua API e não a registra em logs;
-- a URL do calendário chega à API apenas para validação e não é persistida;
+- a URL do calendário é validada e cifrada com AES-256-GCM antes de ser
+  persistida;
 - o beta não usa armazenamento acessível por JavaScript no navegador;
 - a instalação usa apenas um cookie aleatório `HttpOnly`, `Secure` e
   `SameSite=Lax`, cujo hash é associado aos dados no banco;
 - tokens do Notion são cifrados com AES-256-GCM antes de chegar ao Supabase;
-- o token emitido pelo Campus ainda é validado e descartado pela interface;
+- o token emitido pelo Campus é validado, cifrado e persistido; usuário e senha
+  são apagados da interface e nunca chegam à API da aplicação;
 - não existem analytics, anúncios ou scripts de rastreamento.
 
 ## Proteções verificadas
@@ -49,8 +51,8 @@ usam fonte de 16 pixels no celular para evitar zoom automático no iOS.
   do Next.js; origens externas continuam bloqueadas;
 - o OAuth do Notion depende das chaves e da migração do Supabase configuradas no
   ambiente de produção;
-- a persistência do calendário/Moodle e a sincronização automática ainda não
-  estão ativas;
+- a criação dos painéis e a sincronização manual estão ativas; a sincronização
+  periódica no beta web ainda não está ativa;
 - antes de abrir o sincronizador, são necessários testes adicionais de
   isolamento entre instalações, revogação e rotação da chave de criptografia;
 - deve ser publicada na Vercel uma regra de rate limit para

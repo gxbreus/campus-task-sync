@@ -12,16 +12,19 @@ entender quais dados saem do computador e como revogar os acessos.
 
 ## Beta web
 
-Uma interface web está em desenvolvimento para substituir a configuração por
-terminal. A versão inicial está publicada em
+Uma interface web beta substitui a configuração inicial por terminal. A versão
+está publicada em
 [campus-task-sync.vercel.app](https://campus-task-sync.vercel.app/) com Next.js
-na Vercel. A conexão pública do Notion possui implementação OAuth segura; a
-persistência do calendário/Moodle e as sincronizações agendadas são a próxima
-etapa.
+na Vercel. Nela, o estudante conecta o Notion, valida o calendário, protege o
+token do Campus e pode criar os painéis de tarefas e faltas e sincronizar as
+atividades manualmente.
 
 O fluxo não terá cadastro próprio: o estudante conectará o Notion, colará a URL
 dinâmica do calendário e poderá obter o token Moodle diretamente no Campus pelo
-navegador. A senha institucional não passa pelo servidor do Campus Task Sync.
+navegador. A senha institucional não passa pelo servidor do Campus Task Sync;
+a URL do calendário e os tokens necessários são cifrados antes de serem
+armazenados. A sincronização periódica sem apertar o botão continua planejada
+para uma próxima versão.
 
 Para executar a interface localmente:
 
