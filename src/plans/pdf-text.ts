@@ -1,5 +1,3 @@
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-
 type TextItem = { str: string; transform: number[]; width: number };
 
 function isTextItem(value: unknown): value is TextItem {
@@ -9,6 +7,9 @@ function isTextItem(value: unknown): value is TextItem {
 }
 
 export async function extractPdfText(bytes: Uint8Array): Promise<string> {
+  // O carregamento tardio evita inicializar o runtime pesado do PDF.js em
+  // rotas da Vercel que não precisam ler um plano de ensino.
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const document = await getDocument({ data: bytes, isEvalSupported: false, useSystemFonts: true }).promise;
   const pages: string[] = [];
   try {
