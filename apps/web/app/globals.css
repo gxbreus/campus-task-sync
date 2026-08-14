@@ -158,6 +158,7 @@ input {
   outline: none; color: var(--ink); background: white;
 }
 input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 107, 95, .12); }
+input:disabled { cursor: not-allowed; color: var(--muted); background: #f0f4f2; opacity: .75; }
 .form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
 .credentials-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
 

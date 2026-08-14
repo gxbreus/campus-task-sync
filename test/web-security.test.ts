@@ -115,3 +115,13 @@ test("OAuth do Notion usa state, cookies protegidos e tokens cifrados", async ()
   assert.match(crypto, /aes-256-gcm/);
   assert.doesNotMatch(callback, /console\.(log|debug|info|warn|error)/);
 });
+
+test("onboarding preserva a guia e bloqueia campos ja concluidos", async () => {
+  const source = await readFile("apps/web/components/setup-wizard.tsx", "utf8");
+
+  assert.match(source, /target="_blank"/);
+  assert.match(source, /rel="noopener noreferrer"/);
+  assert.match(source, /disabled=\{calendarState === "success"\}/);
+  assert.match(source, /disabled=\{moodleState === "success"\}/);
+  assert.match(source, /moodleState === "loading" \|\| moodleState === "success"/);
+});
