@@ -27,22 +27,18 @@ export default function Home() {
       <footer className="site-footer">
         <p>Projeto open source e sem vínculo oficial com a UFLA.</p>
         <nav aria-label="Links do projeto e do desenvolvedor">
-          <span>Desenvolvido por @gxbreus</span>
+          <span className="developer-credit">
+            Desenvolvido por{" "}
+            <a
+              href="https://github.com/gxbreus"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Gabriel Soares
+            </a>
+          </span>
           <a
-            href="https://github.com/gxbreus"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://www.linkedin.com/in/gabreus/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            LinkedIn
-          </a>
-          <a
+            className="contribute-link"
             href="https://github.com/gxbreus/campus-task-sync"
             target="_blank"
             rel="noopener noreferrer"
