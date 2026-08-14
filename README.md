@@ -13,8 +13,9 @@ entender quais dados saem do computador e como revogar os acessos.
 ## Beta web
 
 Uma interface web está em desenvolvimento para substituir a configuração por
-terminal. O beta será hospedado com Next.js na Vercel e usará Supabase para
-persistência e sincronizações agendadas, ambos inicialmente nos planos gratuitos.
+terminal. A versão inicial está publicada em
+[campus-task-sync.vercel.app](https://campus-task-sync.vercel.app/) com Next.js
+na Vercel. A persistência e as sincronizações agendadas ainda não estão ativas.
 
 O fluxo não terá cadastro próprio: o estudante conectará o Notion, colará a URL
 dinâmica do calendário e poderá obter o token Moodle diretamente no Campus pelo
@@ -29,7 +30,9 @@ npm run web:dev
 
 A implementação fica em `apps/web`. Consulte a
 [arquitetura do beta](./docs/ARQUITETURA-WEB-BETA.md) para conhecer o modelo de
-deploy, armazenamento e segurança.
+deploy, armazenamento e segurança, e a
+[auditoria do beta web](./docs/AUDITORIA-SEGURANCA-WEB.md) para ver os controles
+já testados e as limitações conhecidas.
 
 Contribuições de estudantes de qualquer curso são bem-vindas. Consulte o
 [guia de contribuição](./CONTRIBUTING.md) antes de abrir uma issue ou pull
