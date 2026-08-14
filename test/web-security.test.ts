@@ -178,3 +178,13 @@ test("rotas de acao nao devolvem mensagens internas de excecoes", async () => {
     assert.match(source, /error instanceof WebRequestError/);
   }
 });
+
+test("deploy da Vercel usa a saida do Next em vez de uma pasta publica", async () => {
+  const config = JSON.parse(await readFile("apps/web/vercel.json", "utf8")) as {
+    framework?: string;
+    outputDirectory?: string;
+  };
+
+  assert.equal(config.framework, "nextjs");
+  assert.equal(config.outputDirectory, ".next");
+});
