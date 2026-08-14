@@ -151,6 +151,22 @@ main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 .hint { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
 .text-link { min-height: 44px; display: inline-flex; align-items: center; margin-bottom: 8px; color: var(--green); font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
+.campus-calendar-button {
+  width: fit-content;
+  min-height: 48px;
+  margin: 2px 0 16px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 12px;
+  color: white;
+  background: var(--green-dark);
+  box-shadow: 0 9px 22px rgba(17, 75, 67, .18);
+  font-weight: 850;
+  text-decoration: none;
+}
+.campus-calendar-button:hover { background: var(--green); transform: translateY(-1px); }
 
 .calendar-guide {
   margin: 4px 0 20px;
@@ -210,7 +226,7 @@ input:disabled { cursor: not-allowed; color: var(--muted); background: #f0f4f2; 
 .feedback.error { color: var(--red); }
 .token-ready { margin: 8px 0 0; color: var(--muted); font-size: .76rem; }
 
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .action-card { min-height: 110px; padding: 16px; display: grid; gap: 4px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); cursor: pointer; }
 .action-card:disabled { cursor: not-allowed; opacity: .6; }
 .action-card:not(:disabled):hover { border-color: #9fc4bb; background: #f5faf8; }

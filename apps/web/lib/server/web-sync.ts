@@ -8,13 +8,16 @@ import { MoodleClient } from "@campus/moodle/client";
 import { enrichTasksWithMoodle } from "@campus/moodle/enrich-tasks";
 import { NotionDestination } from "@campus/notion/notion-destination";
 import { setupAttendancePanel } from "@campus/notion/setup-attendance";
+import { setupImportantDatesPanel } from "@campus/notion/setup-important-dates";
 import { setupNotion } from "@campus/notion/setup-notion";
+import { discoverTeachingPlans } from "@campus/plans/discover-teaching-plans";
 import { syncTasks } from "@campus/sync/sync-tasks";
 
 import type { WebServerConfig } from "./config";
 import { decryptSecret } from "./crypto";
 import {
   findInstallation,
+  listReadyInstallations,
   updateInstallation,
   type InstallationRecord,
 } from "./installations";
@@ -35,6 +38,13 @@ async function runtimeInstallation(
 ): Promise<RuntimeInstallation> {
   const record = await findInstallation(config, installationToken);
   if (!record) throw new Error("Conecte novamente o Notion para continuar.");
+  return runtimeFromRecord(config, record);
+}
+
+function runtimeFromRecord(
+  config: WebServerConfig,
+  record: InstallationRecord,
+): RuntimeInstallation {
   return {
     record,
     notionToken: decryptSecret(record.notionAccessTokenEncrypted, config.encryptionKey),
@@ -137,8 +147,48 @@ export async function setupAttendance(config: WebServerConfig, token: string) {
   return { ...result, courses: courses.length };
 }
 
+export async function setupImportantDates(config: WebServerConfig, token: string) {
+  const runtime = await runtimeInstallation(config, token);
+  return setupImportantDatesForRuntime(runtime);
+}
+
+async function setupImportantDatesForRuntime(runtime: RuntimeInstallation) {
+  if (!runtime.calendarUrl || !runtime.moodleToken) {
+    throw new Error("Calendário e token do Campus são obrigatórios para localizar os planos de ensino.");
+  }
+  const moodle = new MoodleClient({
+    calendarUrl: runtime.calendarUrl,
+    token: runtime.moodleToken,
+  });
+  const courses = await moodle.getCurrentSemesterCourses();
+  const plans = await discoverTeachingPlans(moodle, courses);
+  const parentPageId = await notionParentPageId(runtime.notionToken);
+  const result = await setupImportantDatesPanel({
+    token: runtime.notionToken,
+    parentPageId,
+    dates: plans.dates,
+  });
+  return {
+    ...result,
+    dates: plans.dates.length,
+    plansFound: plans.plansFound,
+    plansParsed: plans.plansParsed,
+  };
+}
+
+export async function structureNotion(config: WebServerConfig, token: string) {
+  const tasksPanel = await setupTaskPanel(config, token);
+  const attendance = await setupAttendance(config, token);
+  const importantDates = await setupImportantDates(config, token);
+  return { tasksPanel, attendance, importantDates };
+}
+
 export async function synchronize(config: WebServerConfig, token: string) {
   const runtime = await runtimeInstallation(config, token);
+  return synchronizeRuntime(runtime);
+}
+
+async function synchronizeRuntime(runtime: RuntimeInstallation) {
   if (!runtime.dataSourceId) throw new Error("Crie primeiro o painel de tarefas.");
   const loadedTasks = await tasks(runtime);
   const destination = new NotionDestination({
@@ -146,5 +196,21 @@ export async function synchronize(config: WebServerConfig, token: string) {
     dataSourceId: runtime.dataSourceId,
   });
   const result = await syncTasks(loadedTasks, destination);
-  return { calendarTasks: loadedTasks.length, ...result };
+  const importantDates = await setupImportantDatesForRuntime(runtime);
+  return { calendarTasks: loadedTasks.length, importantDates, ...result };
+}
+
+export async function synchronizeReadyInstallations(config: WebServerConfig) {
+  const records = await listReadyInstallations(config);
+  let succeeded = 0;
+  let failed = 0;
+  for (const record of records) {
+    try {
+      await synchronizeRuntime(runtimeFromRecord(config, record));
+      succeeded += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+  return { processed: records.length, succeeded, failed };
 }

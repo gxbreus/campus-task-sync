@@ -16,15 +16,15 @@ Uma interface web beta substitui a configuração inicial por terminal. A versã
 está publicada em
 [campus-task-sync.vercel.app](https://campus-task-sync.vercel.app/) com Next.js
 na Vercel. Nela, o estudante conecta o Notion, valida o calendário, protege o
-token do Campus e pode criar os painéis de tarefas e faltas e sincronizar as
-atividades manualmente.
+token do Campus, estruturar de uma vez os painéis de tarefas, faltas e datas
+importantes e sincronizar as atividades manualmente.
 
 O fluxo não terá cadastro próprio: o estudante conectará o Notion, colará a URL
 dinâmica do calendário e poderá obter o token Moodle diretamente no Campus pelo
 navegador. A senha institucional não passa pelo servidor do Campus Task Sync;
 a URL do calendário e os tokens necessários são cifrados antes de serem
-armazenados. A sincronização periódica sem apertar o botão continua planejada
-para uma próxima versão.
+armazenados. Quando o agendador do deploy é ativado, ele também procura novos
+planos de ensino em PDF e atualiza tarefas e datas importantes a cada 30 minutos.
 
 Para executar a interface localmente:
 
@@ -58,6 +58,8 @@ licença nas cópias.
 - cria e atualiza tarefas no Notion sem duplicação;
 - une eventos de abertura e encerramento da mesma atividade;
 - consulta abertura, prazo, enunciado, link e anexos pela API do Moodle;
+- encontra planos de ensino em PDF publicados nas disciplinas e leva provas,
+  trabalhos e outras avaliações para o painel de datas importantes;
 - separa as tarefas por disciplina e mostra alertas de prazo;
 - retira tarefas concluídas das visões ativas e as mantém em `Arquivadas`;
 - permite desarquivar uma tarefa desmarcando `Concluída`;
@@ -240,16 +242,23 @@ COURSE_CREDITS=GCC128=4,GCC175=2
 
 ## Datas importantes e planos de ensino
 
-O comando abaixo **não é genérico neste momento**:
+No beta web, o botão **Estruturar Notion** procura planos de ensino em PDF entre
+os materiais das disciplinas. Provas, trabalhos e outras avaliações
+reconhecidas são criadas ou atualizadas no painel de datas importantes. Nas
+sincronizações seguintes, o Campus é consultado novamente para detectar planos
+publicados ou alterados pelos professores.
+
+O comando local abaixo mantém uma personalização do autor e **não é genérico**:
 
 ```bash
 npm run setup:important-dates
 ```
 
-Ele contém os planos de ensino de GCC128, GCC175, GCC220 e GCC262 de 2026/2 e as datas
-de uma viagem específica do autor do projeto. Outro usuário não deve executá-lo
-sem antes substituir os dados em `src/plans/semester-2026-2.ts` pelos próprios
-planos, avaliações e ausências planejadas.
+Ele contém os planos de ensino de GCC128, GCC175, GCC220 e GCC262 de 2026/2 e
+as datas de uma viagem específica do autor do projeto. Outro usuário não deve
+executá-lo sem antes substituir os dados em `src/plans/semester-2026-2.ts` pelos
+próprios planos, avaliações e ausências planejadas. Essa limitação é somente do
+comando local; a descoberta do beta web usa as disciplinas de cada estudante.
 
 As datas dos planos são tratadas como previsões. O prazo publicado no Campus
 Virtual continua sendo a referência final.
@@ -380,6 +389,7 @@ recebe automaticamente os secrets configurados em forks ou clones.
 | `OPENAI_API_KEY` | não | sugestões de resposta |
 | `ENABLE_AI_SUGGESTIONS` | não | ativa as sugestões quando `true` |
 | `OPENAI_MODEL` | não | modelo usado nas sugestões |
+| `SYNC_CRON_SECRET` | beta web | protege a rota da sincronização periódica |
 
 Use `.env.example` como modelo. Não preencha nem comite `.env.example` com dados
 reais.
@@ -398,6 +408,23 @@ reais.
 | `npm run sync:drive` | sincroniza materiais com o Drive |
 | `npm run check` | executa tipagem e testes |
 | `npm run build` | compila o projeto |
+
+## Ativar a sincronização do beta a cada 30 minutos
+
+A publicação web funciona manualmente sem esta configuração. Para ativar a
+atualização periódica de todas as instalações prontas:
+
+1. gere um valor aleatório longo e guarde-o como `SYNC_CRON_SECRET` nas
+   variáveis de produção da Vercel;
+2. salve exatamente o mesmo valor como `WEB_SYNC_CRON_SECRET` em **Settings →
+   Secrets and variables → Actions** no repositório do GitHub;
+3. faça um novo deploy na Vercel e execute o workflow **Sincronizar Campus com
+   Notion** uma vez para validar.
+
+O workflow chama a rota protegida do beta a cada 30 minutos. Em cada execução,
+o sistema atualiza as tarefas e volta a procurar planos de ensino em PDF nas
+disciplinas do Campus. Nunca coloque esse segredo no código, no README ou em
+capturas de tela.
 
 ## Problemas comuns
 

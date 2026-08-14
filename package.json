@@ -32,7 +32,8 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "googleapis": "^174.0.1",
-    "ical.js": "^2.2.1"
+    "ical.js": "^2.2.1",
+    "pdfjs-dist": "^5.4.624"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
