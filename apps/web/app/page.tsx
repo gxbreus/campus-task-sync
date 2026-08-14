@@ -1,6 +1,12 @@
 import { SetupWizard } from "@/components/setup-wizard";
+import { isNotionOAuthConfigured } from "@/lib/server/config";
 
-export default function Home() {
+type HomeProps = {
+  searchParams: Promise<{ notion?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { notion } = await searchParams;
   return (
     <main>
       <header className="hero">
@@ -23,7 +29,11 @@ export default function Home() {
           <small>Task Sync</small>
         </div>
       </header>
-      <SetupWizard />
+      <SetupWizard
+        notionConfigured={isNotionOAuthConfigured()}
+        notionConnected={notion === "connected"}
+        notionError={notion === "error"}
+      />
       <footer className="site-footer">
         <p>Projeto open source e sem vínculo oficial com a UFLA.</p>
         <nav aria-label="Links do projeto e do desenvolvedor">
