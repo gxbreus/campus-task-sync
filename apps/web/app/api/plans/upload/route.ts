@@ -47,14 +47,15 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json(result, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     const known = error instanceof WebRequestError;
-    const noDates = error instanceof Error && /Nenhuma avaliação foi reconhecida/.test(error.message);
+    const invalidPlan = error instanceof Error &&
+      /Nenhuma avaliação foi reconhecida|não possuem texto selecionável|Não foi possível ler os PDFs/.test(error.message);
     return NextResponse.json(
       {
-        message: known || noDates
+        message: known || invalidPlan
           ? error.message
           : "Não foi possível processar os planos. Confirme se são PDFs de planos de ensino da UFLA.",
       },
-      { status: known ? error.status : noDates ? 422 : 500, headers: { "cache-control": "no-store" } },
+      { status: known ? error.status : invalidPlan ? 422 : 500, headers: { "cache-control": "no-store" } },
     );
   }
 }

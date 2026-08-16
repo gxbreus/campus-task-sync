@@ -186,6 +186,7 @@ test("reconexao limpa a configuracao anterior e permite apagar a instalacao", as
 test("upload manual limita PDFs e descarta o arquivo depois de extrair datas", async () => {
   const route = await readFile("apps/web/app/api/plans/upload/route.ts", "utf8");
   const sync = await readFile("apps/web/lib/server/web-sync.ts", "utf8");
+  const pdfText = await readFile("src/plans/pdf-text.ts", "utf8");
   const installations = await readFile("apps/web/lib/server/installations.ts", "utf8");
 
   assert.match(route, /MAXIMUM_REQUEST_BYTES = 4_000_000/);
@@ -194,6 +195,8 @@ test("upload manual limita PDFs e descarta o arquivo depois de extrair datas", a
   assert.match(route, /application\/pdf/);
   assert.match(route, /importTeachingPlans/);
   assert.match(sync, /extractPdfText\(file\.bytes\)/);
+  assert.match(pdfText, /pdf\.worker\.mjs/);
+  assert.match(pdfText, /pdfjsWorker/);
   assert.match(sync, /setupImportantDatesPanel/);
   assert.doesNotMatch(installations, /pdf|file_name|file_bytes/i);
 });

@@ -221,9 +221,16 @@ export async function importTeachingPlans(
   const runtime = await runtimeInstallation(config, token);
   const dates = [];
   const rejected: string[] = [];
+  let unreadableFiles = 0;
+  let filesWithoutText = 0;
   for (const file of files) {
     try {
       const text = await extractPdfText(file.bytes);
+      if (text.trim().length < 40) {
+        filesWithoutText += 1;
+        rejected.push(file.name);
+        continue;
+      }
       const parsed = parseTeachingPlanText(text, {
         code: "PLANO",
         name: file.name.replace(/\.pdf$/i, ""),
@@ -238,10 +245,17 @@ export async function importTeachingPlans(
         notes: "Data extraída de um plano de ensino enviado manualmente no Campus Task Sync.",
       })));
     } catch {
+      unreadableFiles += 1;
       rejected.push(file.name);
     }
   }
   if (!dates.length) {
+    if (filesWithoutText === files.length) {
+      throw new Error("Os PDFs enviados não possuem texto selecionável. Use os arquivos originais baixados do SIG, não fotos ou PDFs digitalizados.");
+    }
+    if (unreadableFiles === files.length) {
+      throw new Error("Não foi possível ler os PDFs enviados. Baixe os arquivos novamente no SIG e tente de novo.");
+    }
     throw new Error("Nenhuma avaliação foi reconhecida nos planos enviados.");
   }
   const parentPageId = await notionParentPageId(runtime.notionToken);
