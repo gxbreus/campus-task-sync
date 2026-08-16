@@ -189,7 +189,7 @@ test("upload manual limita PDFs e descarta o arquivo depois de extrair datas", a
   const installations = await readFile("apps/web/lib/server/installations.ts", "utf8");
 
   assert.match(route, /MAXIMUM_REQUEST_BYTES = 4_000_000/);
-  assert.match(route, /MAXIMUM_FILES = 6/);
+  assert.match(route, /MAXIMUM_FILES = 8/);
   assert.match(route, /multipart\/form-data/);
   assert.match(route, /application\/pdf/);
   assert.match(route, /importTeachingPlans/);

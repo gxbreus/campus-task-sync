@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAXIMUM_REQUEST_BYTES = 4_000_000;
-const MAXIMUM_FILES = 6;
+const MAXIMUM_FILES = 8;
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -26,7 +26,7 @@ export async function POST(request: Request): Promise<Response> {
     const form = await request.formData();
     const files = form.getAll("plans").filter((value): value is File => value instanceof File);
     if (!files.length || files.length > MAXIMUM_FILES) {
-      throw new WebRequestError("Selecione entre 1 e 6 planos de ensino em PDF.");
+      throw new WebRequestError("Selecione entre 1 e 8 planos de ensino em PDF.");
     }
     if (files.reduce((total, file) => total + file.size, 0) > MAXIMUM_REQUEST_BYTES) {
       throw new WebRequestError("Os arquivos juntos devem ter no máximo 4 MB.", 413);
