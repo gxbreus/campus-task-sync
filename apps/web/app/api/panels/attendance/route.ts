@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { loadWebServerConfig } from "@/lib/server/config";
-import { requireSameOrigin, WebRequestError } from "@/lib/server/request-security";
+import { requireSameOrigin, safeActionError, WebRequestError } from "@/lib/server/request-security";
 import { installationToken } from "@/lib/server/session";
 import { setupAttendance } from "@/lib/server/web-sync";
 
@@ -15,10 +15,10 @@ export async function POST(request: Request): Promise<Response> {
     const result = await setupAttendance(loadWebServerConfig(), token);
     return NextResponse.json(result, { headers: { "cache-control": "no-store" } });
   } catch (error) {
-    const known = error instanceof WebRequestError;
+    const safe = safeActionError(error, "Não foi possível criar o controle de faltas. Tente novamente.");
     return NextResponse.json(
-      { message: known ? error.message : "Não foi possível criar o controle de faltas. Tente novamente." },
-      { status: known ? error.status : 500, headers: { "cache-control": "no-store" } },
+      { message: safe.message },
+      { status: safe.status, headers: { "cache-control": "no-store" } },
     );
   }
 }

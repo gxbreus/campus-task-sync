@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { loadWebServerConfig } from "@/lib/server/config";
 import { createOpaqueToken, encryptSecret, hashOpaqueToken } from "@/lib/server/crypto";
-import { saveNotionInstallation } from "@/lib/server/installations";
+import { deleteInstallation, saveNotionInstallation } from "@/lib/server/installations";
 import { exchangeNotionCode } from "@/lib/server/notion-oauth";
 import { INSTALLATION_COOKIE } from "@/lib/server/session";
 
@@ -30,6 +30,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   let appUrl = request.nextUrl.origin;
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(OAUTH_STATE_COOKIE)?.value;
+  const previousInstallationToken = cookieStore.get(INSTALLATION_COOKIE)?.value;
   cookieStore.delete(OAUTH_STATE_COOKIE);
 
   try {
@@ -43,6 +44,9 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 
     const notion = await exchangeNotionCode(config, code);
+    if (previousInstallationToken) {
+      await deleteInstallation(config, previousInstallationToken);
+    }
     const installationToken = createOpaqueToken();
     await saveNotionInstallation(config, {
       sessionHash: hashOpaqueToken(installationToken),
