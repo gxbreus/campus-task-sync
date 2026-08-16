@@ -29,7 +29,7 @@ test("extrai avaliações do formato oficial e une datas repetidas", () => {
     [
       ["Projeto #01 (Pesquisa inicial)", "2026-09-01", "2026-09-02", 20],
       ["Entrega — TRABALHO FINAL", "2026-10-15", undefined, 50],
-      ["PROVA1", "2026-10-15", undefined, 30],
+      ["Prova 1", "2026-10-15", undefined, 30],
     ],
   );
   assert.match(result[0]?.id ?? "", /^2026-2:ABC123:plano:/);
@@ -43,5 +43,33 @@ test("não inventa datas quando o documento não é um plano reconhecido", () =>
       period: "2026/2",
     }),
     [],
+  );
+});
+
+test("reconhece provas ordinais e ignora revisões, elaboração e lançamento de notas", () => {
+  const result = parseTeachingPlanText(`
+PLANO DE ENSINO
+Código: GCC243 Nome: Qualidade de Software
+Semestre: 2026/2
+Atividades Avaliativas: Prova 1: 30%; Prova 2: 30%; Prova 3: 30%;
+Dados da Ementa
+Cronograma de Atividades
+1 15/09/2026 1ª Prova
+2 20/10/2026 2ª Prova
+3 27/10/2026 Revisão da 1ª Prova + Revisão da 2ª Prova
+4 01/12/2026 3ª Prova
+5 12/12/2026 Elaboração da Avaliação Adicional
+6 15/12/2026 Avaliação Adicional
+7 19/12/2026 Lançamento das Notas da Avaliação Adicional no SIG
+`, { code: "GCC243", name: "Qualidade de Software", period: "2026/2" });
+
+  assert.deepEqual(
+    result.map(({ title, start, end, weight }) => [title, start, end, weight]),
+    [
+      ["Prova 1", "2026-09-15", undefined, 30],
+      ["Prova 2", "2026-10-20", undefined, 30],
+      ["Prova 3", "2026-12-01", undefined, 30],
+      ["Avaliação Adicional", "2026-12-15", undefined, undefined],
+    ],
   );
 });

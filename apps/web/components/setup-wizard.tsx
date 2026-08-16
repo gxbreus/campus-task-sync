@@ -384,7 +384,7 @@ export function SetupWizard({
             <button className="button secondary" disabled={!notionConnected || Boolean(actionLoading)}>
               {actionLoading === "plans" ? "Lendo planos..." : "Adicionar datas dos planos"}
             </button>
-            <small>Até 6 arquivos, somando no máximo 4 MB.</small>
+            <small>Até 8 arquivos, somando no máximo 4 MB.</small>
           </form>
           {actionMessage && <p className={`feedback ${actionError ? "error" : "success"}`}>{actionMessage}</p>}
         </div>

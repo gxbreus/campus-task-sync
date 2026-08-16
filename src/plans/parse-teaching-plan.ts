@@ -35,7 +35,19 @@ function cleanTitle(value: string): string {
     .trim();
 }
 
+function canonicalTitle(value: string): string {
+  const title = cleanTitle(value);
+  const ordinalProof = title.match(/^(\d+)\s*[ªºa]?\s*prova$/iu);
+  if (ordinalProof?.[1]) return `Prova ${ordinalProof[1]}`;
+  const numberedProof = title.match(/^prova\s*#?\s*(\d+)$/iu);
+  if (numberedProof?.[1]) return `Prova ${numberedProof[1]}`;
+  return title;
+}
+
 function eventTitles(description: string): string[] {
+  if (/^(revisao|elaboracao|lancamento\s+(?:das?\s+)?notas)/.test(normalized(description))) {
+    return [];
+  }
   const result: string[] = [];
   for (const match of description.matchAll(/\[\s*entrega\s*:\s*([^\]]+)\]/giu)) {
     result.push(`Entrega — ${cleanTitle(match[1] ?? "")}`);
@@ -46,6 +58,7 @@ function eventTitles(description: string): string[] {
     /prova\s+(?:de\s+)?segunda\s+chamada/giu,
     /prova\s+(?:de\s+)?recupera[çc][aã]o/giu,
     /prova\s*#?\s*\d+/giu,
+    /\d+\s*[ªºa]?\s*prova/giu,
     /avalia[çc][aã]o\s+(?:de\s+)?recupera[çc][aã]o/giu,
     /avalia[çc][aã]o\s+adicional/giu,
     /projeto\s*#?\s*\d+\s*(?:\([^)]*\)|[-–—:]?\s*[^.;\[]+)?/giu,
@@ -54,7 +67,7 @@ function eventTitles(description: string): string[] {
   ];
   for (const pattern of patterns) {
     for (const match of withoutDeliveries.matchAll(pattern)) {
-      result.push(cleanTitle(match[0]));
+      result.push(canonicalTitle(match[0]));
     }
   }
   return [...new Map(result.filter(Boolean).map((title) => [normalized(title), title])).values()];
