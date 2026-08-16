@@ -19,9 +19,14 @@ function normalized(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-function isTeachingPlan(activity: MoodleActivity, attachment: TaskAttachment): boolean {
+export function isTeachingPlan(activity: MoodleActivity, attachment: TaskAttachment): boolean {
   const label = normalized(`${activity.name} ${attachment.name}`);
-  return attachment.name.toLowerCase().endsWith(".pdf") && /plano\s+(?:de\s+)?(?:ensino|curso)/.test(label);
+  return attachment.name.toLowerCase().endsWith(".pdf") && /plano\s+(?:de\s+)?(?:ensino|curso|aula)/.test(label);
+}
+
+export function datesForPeriod(dates: ImportantDate[], period: string): ImportantDate[] {
+  const prefix = `${period.replace("/", "-")}:`;
+  return dates.filter((date) => date.id.startsWith(prefix));
 }
 
 export async function discoverTeachingPlans(
@@ -42,7 +47,7 @@ export async function discoverTeachingPlans(
     if (!course) continue;
     try {
       const text = await extractPdfText(await moodle.downloadAttachment(attachment));
-      const parsed = parseTeachingPlanText(text, course);
+      const parsed = datesForPeriod(parseTeachingPlanText(text, course), course.period);
       if (parsed.length > 0) plansParsed += 1;
       dates.push(...parsed);
     } catch {

@@ -31,3 +31,21 @@ test("considera somente as aulas de Grafos durante a viagem", () => {
   const graphAbsences = PLANNED_ABSENCES_2026_2.find((item) => item.courseCode === "GCC262");
   assert.deepEqual(graphAbsences?.dates, ["2026-10-21", "2026-10-22"]);
 });
+
+test("registra as provas do plano de Qualidade de Software", () => {
+  const qualityDates = IMPORTANT_DATES_2026_2.filter((date) => date.courseCode === "GCC243");
+  assert.deepEqual(
+    qualityDates.map((date) => [date.title, date.start, date.weight]),
+    [
+      ["Prova 1", "2026-09-15", 30],
+      ["Prova 2", "2026-10-20", 30],
+      ["Prova 3", "2026-12-01", 30],
+      ["Avaliação adicional", "2026-12-15", undefined],
+    ],
+  );
+});
+
+test("considera as aulas de Qualidade de Software durante a viagem", () => {
+  const qualityAbsences = PLANNED_ABSENCES_2026_2.find((item) => item.courseCode === "GCC243");
+  assert.deepEqual(qualityAbsences?.dates, ["2026-10-20", "2026-10-24"]);
+});
