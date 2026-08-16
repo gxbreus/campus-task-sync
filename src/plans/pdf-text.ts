@@ -9,7 +9,17 @@ function isTextItem(value: unknown): value is TextItem {
 export async function extractPdfText(bytes: Uint8Array): Promise<string> {
   // O carregamento tardio evita inicializar o runtime pesado do PDF.js em
   // rotas da Vercel que não precisam ler um plano de ensino.
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  // O worker também precisa ser importado explicitamente. Sem isso, o bundle
+  // de produção do Next tenta carregar um pdf.worker.mjs que não existe na
+  // função serverless e todo PDF falha antes da extração do texto.
+  const [{ getDocument }, { WorkerMessageHandler }] = await Promise.all([
+    import("pdfjs-dist/legacy/build/pdf.mjs"),
+    import("pdfjs-dist/legacy/build/pdf.worker.mjs"),
+  ]);
+  const workerGlobal = globalThis as typeof globalThis & {
+    pdfjsWorker?: { WorkerMessageHandler: typeof WorkerMessageHandler };
+  };
+  workerGlobal.pdfjsWorker ??= { WorkerMessageHandler };
   const document = await getDocument({ data: bytes, isEvalSupported: false, useSystemFonts: true }).promise;
   const pages: string[] = [];
   try {
