@@ -113,6 +113,7 @@ test("OAuth do Notion usa state, cookies protegidos e tokens cifrados", async ()
   assert.match(callback, /hashOpaqueToken\(installationToken\)/);
   assert.match(callback, /encryptSecret\(notion\.access_token/);
   assert.match(callback, /encryptSecret\(notion\.refresh_token/);
+  assert.match(callback, /deleteInstallation\(config, previousInstallationToken\)/);
   assert.match(crypto, /aes-256-gcm/);
   assert.doesNotMatch(callback, /console\.(log|debug|info|warn|error)/);
 });
@@ -143,6 +144,8 @@ test("etapa final usa as rotas reais e deixa de ser um prototipo desabilitado", 
   assert.match(source, /\/api\/panels\/structure/);
   assert.match(source, /\/api\/sync/);
   assert.match(source, /Estruturar Notion/);
+  assert.match(source, /\/api\/plans\/upload/);
+  assert.match(source, /Apagar configuração e recomeçar/);
   assert.doesNotMatch(source, /Substitui setup:|Substitui npm run/);
 });
 
@@ -168,6 +171,33 @@ test("calendario e token do Campus sao persistidos somente cifrados", async () =
   assert.doesNotMatch(moodle, /password|senha/i);
 });
 
+test("reconexao limpa a configuracao anterior e permite apagar a instalacao", async () => {
+  const installations = await readFile("apps/web/lib/server/installations.ts", "utf8");
+  const reset = await readFile("apps/web/app/api/onboarding/reset/route.ts", "utf8");
+
+  assert.match(installations, /calendar_url_encrypted: null/);
+  assert.match(installations, /moodle_token_encrypted: null/);
+  assert.match(installations, /notion_data_source_id: null/);
+  assert.match(installations, /\.from\("web_installations"\)[\s\S]*\.delete\(\)/);
+  assert.match(reset, /maxAge: 0/);
+  assert.match(reset, /requireSameOrigin\(request\)/);
+});
+
+test("upload manual limita PDFs e descarta o arquivo depois de extrair datas", async () => {
+  const route = await readFile("apps/web/app/api/plans/upload/route.ts", "utf8");
+  const sync = await readFile("apps/web/lib/server/web-sync.ts", "utf8");
+  const installations = await readFile("apps/web/lib/server/installations.ts", "utf8");
+
+  assert.match(route, /MAXIMUM_REQUEST_BYTES = 4_000_000/);
+  assert.match(route, /MAXIMUM_FILES = 6/);
+  assert.match(route, /multipart\/form-data/);
+  assert.match(route, /application\/pdf/);
+  assert.match(route, /importTeachingPlans/);
+  assert.match(sync, /extractPdfText\(file\.bytes\)/);
+  assert.match(sync, /setupImportantDatesPanel/);
+  assert.doesNotMatch(installations, /pdf|file_name|file_bytes/i);
+});
+
 test("OAuth movel usa envio no navegador e oferece copia sem redirecionamento automatico", async () => {
   const connect = await readFile("apps/web/app/api/notion/connect/route.ts", "utf8");
 
@@ -185,7 +215,7 @@ test("rotas de acao nao devolvem mensagens internas de excecoes", async () => {
   ]) {
     const source = await readFile(route, "utf8");
     assert.doesNotMatch(source, /error instanceof Error \? error\.message/);
-    assert.match(source, /error instanceof WebRequestError/);
+    assert.match(source, /safeActionError/);
   }
 });
 

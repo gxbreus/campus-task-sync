@@ -20,6 +20,8 @@ uma certificação independente nem garante ausência absoluta de vulnerabilidad
   são apagados da interface e nunca chegam à API da aplicação;
 - planos de ensino são processados temporariamente em memória; os PDFs e o
   texto integral extraído não são persistidos pelo beta;
+- o envio manual aceita somente PDFs, limita quantidade e tamanho total e não
+  mantém o arquivo depois da extração das datas;
 - a rota periódica exige um segredo compartilhado comparado em tempo constante;
 - não existem analytics, anúncios ou scripts de rastreamento.
 

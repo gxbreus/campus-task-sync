@@ -148,6 +148,12 @@ main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 .button:disabled { cursor: not-allowed; opacity: .55; }
 .notion-button { width: fit-content; display: inline-flex; align-items: center; text-decoration: none; }
 .notion-button.disabled { pointer-events: none; cursor: not-allowed; opacity: .55; }
+.connection-actions { margin-top: 10px; }
+.reset-button {
+  min-height: 44px; padding: 0; border: 0; color: var(--red); background: transparent;
+  cursor: pointer; font-size: .78rem; font-weight: 750; text-decoration: underline; text-underline-offset: 3px;
+}
+.reset-button:disabled { cursor: not-allowed; opacity: .55; }
 .hint { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
 .text-link { min-height: 44px; display: inline-flex; align-items: center; margin-bottom: 8px; color: var(--green); font-weight: 800; text-decoration: none; }
 .text-link:hover { text-decoration: underline; }
@@ -232,6 +238,14 @@ input:disabled { cursor: not-allowed; color: var(--muted); background: #f0f4f2; 
 .action-card:not(:disabled):hover { border-color: #9fc4bb; background: #f5faf8; }
 .action-card span { color: var(--green); font-size: 1.25rem; }
 .action-card small { color: var(--muted); }
+.plan-upload {
+  margin-top: 18px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .8fr) auto;
+  gap: 14px; align-items: end; border: 1px solid #cfe0dc; border-radius: 14px; background: #f5faf8;
+}
+.plan-upload strong { display: block; margin-bottom: 4px; color: var(--green-dark); }
+.plan-upload p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.45; }
+.plan-upload > small { grid-column: 2 / -1; color: var(--muted); font-size: .72rem; }
+.plan-upload input[type="file"] { height: auto; min-height: 46px; padding: 10px; font-size: .8rem; }
 
 .site-footer {
   padding: 32px 0 48px;
@@ -263,7 +277,8 @@ input:disabled { cursor: not-allowed; color: var(--muted); background: #f0f4f2; 
   .step-number { width: 32px; height: 32px; }
   .step-title { display: block; }
   .status { display: inline-block; margin-bottom: 14px; }
-  .form-row, .credentials-form, .action-grid { grid-template-columns: 1fr; }
+  .form-row, .credentials-form, .action-grid, .plan-upload { grid-template-columns: 1fr; }
+  .plan-upload > small { grid-column: auto; }
   .calendar-guide { padding: 15px; }
   input { font-size: 1rem; }
   .button { width: 100%; }

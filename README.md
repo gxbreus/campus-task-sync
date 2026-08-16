@@ -248,6 +248,17 @@ reconhecidas são criadas ou atualizadas no painel de datas importantes. Nas
 sincronizações seguintes, o Campus é consultado novamente para detectar planos
 publicados ou alterados pelos professores.
 
+Quando o professor disponibiliza o plano somente no SIG, use **Adicionar datas
+dos planos** na interface web e selecione o PDF baixado. O beta extrai as datas
+durante o envio e grava somente os eventos no Notion; o arquivo e seu texto
+integral não são armazenados pelo Campus Task Sync. Planos encontrados depois
+no Campus atualizam os mesmos eventos sem duplicá-los.
+
+Reconectar o Notion inicia uma configuração nova para a página escolhida. A
+opção **Apagar configuração e recomeçar** também remove do Supabase os tokens,
+o calendário e os IDs vinculados à sessão atual. Apenas limpar cookies do
+navegador não apaga dados armazenados no servidor.
+
 O comando local abaixo mantém uma personalização do autor e **não é genérico**:
 
 ```bash

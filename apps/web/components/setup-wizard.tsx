@@ -16,7 +16,7 @@ type SetupWizardProps = {
   taskPanelCreated: boolean;
 };
 
-type ActionName = "structure" | "sync";
+type ActionName = "plans" | "reset" | "structure" | "sync";
 
 export function SetupWizard({
   calendarConnected,
@@ -117,24 +117,73 @@ export function SetupWizard({
         importantDates?: { dates?: number; plansParsed?: number };
         message?: string;
         tasksPanel?: { tasksFound?: number };
+        warnings?: string[];
       };
       if (!response.ok) throw new Error(result.message ?? "Não foi possível concluir esta ação.");
       if (action === "structure") {
         setPanelReady(true);
         setActionMessage(
           `Notion estruturado: ${result.tasksPanel?.tasksFound ?? 0} atividades e ` +
-          `${result.importantDates?.dates ?? 0} datas de planos encontradas.`,
+          `${result.importantDates?.dates ?? 0} datas de planos encontradas.` +
+          (result.warnings?.length ? ` ${result.warnings.join(" ")}` : ""),
         );
       } else {
         setActionMessage(
           `Sincronização concluída com ${result.calendarTasks ?? 0} atividades e ` +
-          `${result.importantDates?.dates ?? 0} datas importantes.`,
+          `${result.importantDates?.dates ?? 0} datas importantes.` +
+          (result.warnings?.length ? ` ${result.warnings.join(" ")}` : ""),
         );
       }
     } catch (error) {
       setActionError(true);
       setActionMessage(error instanceof Error ? error.message : "Não foi possível concluir esta ação.");
     } finally {
+      setActionLoading(undefined);
+    }
+  }
+
+  async function uploadPlans(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const input = form.elements.namedItem("plans");
+    if (!(input instanceof HTMLInputElement) || !input.files?.length) return;
+    setActionLoading("plans");
+    setActionMessage("");
+    setActionError(false);
+    try {
+      const body = new FormData();
+      for (const file of input.files) body.append("plans", file);
+      const response = await fetch("/api/plans/upload", { method: "POST", body });
+      const result = (await response.json()) as {
+        dates?: number;
+        message?: string;
+        rejected?: string[];
+      };
+      if (!response.ok) throw new Error(result.message ?? "Não foi possível ler os planos.");
+      form.reset();
+      setActionMessage(
+        `${result.dates ?? 0} datas adicionadas ao Notion.` +
+        (result.rejected?.length ? ` Não reconhecidos: ${result.rejected.join(", ")}.` : ""),
+      );
+    } catch (error) {
+      setActionError(true);
+      setActionMessage(error instanceof Error ? error.message : "Não foi possível ler os planos.");
+    } finally {
+      setActionLoading(undefined);
+    }
+  }
+
+  async function resetSetup() {
+    if (!window.confirm("Apagar a configuração salva e recomeçar a conexão com o Notion?")) return;
+    setActionLoading("reset");
+    setActionMessage("");
+    try {
+      const response = await fetch("/api/onboarding/reset", { method: "DELETE" });
+      if (!response.ok) throw new Error("Não foi possível apagar a configuração.");
+      window.location.assign("/");
+    } catch (error) {
+      setActionError(true);
+      setActionMessage(error instanceof Error ? error.message : "Não foi possível recomeçar.");
       setActionLoading(undefined);
     }
   }
@@ -171,7 +220,7 @@ export function SetupWizard({
             href={notionConfigured ? "/api/notion/connect" : undefined}
             aria-disabled={!notionConfigured}
           >
-            {notionConnected ? "Reconectar ao Notion" : "Conectar ao Notion"}
+            {notionConnected ? "Trocar página ou reconectar" : "Conectar ao Notion"}
           </a>
           {!notionConfigured && <p className="hint">A integração pública ainda precisa ser configurada na Vercel.</p>}
           {notionConfigured && !notionConnected && (
@@ -181,6 +230,14 @@ export function SetupWizard({
           )}
           {notionError && <p className="feedback error">A autorização não foi concluída. Tente novamente e escolha uma página do Notion.</p>}
           {notionConnected && <p className="feedback success">Workspace autorizado e token protegido com criptografia.</p>}
+          {notionConnected && (
+            <div className="connection-actions">
+              <p className="hint">Reconectar permite escolher outra página e reinicia o calendário e o painel salvos.</p>
+              <button className="reset-button" type="button" onClick={resetSetup} disabled={Boolean(actionLoading)}>
+                {actionLoading === "reset" ? "Apagando configuração..." : "Apagar configuração e recomeçar"}
+              </button>
+            </div>
+          )}
         </div>
       </article>
 
@@ -308,6 +365,27 @@ export function SetupWizard({
               onClick={() => executeAction("sync", "/api/sync")}
             ><span>↻</span><strong>{actionLoading === "sync" ? "Sincronizando..." : "Sincronizar agora"}</strong><small>{panelReady ? "Atualiza as pendências do Campus" : "Crie primeiro o painel de tarefas"}</small></button>
           </div>
+          <form className="plan-upload" onSubmit={uploadPlans}>
+            <div>
+              <strong>O professor não publicou o plano no Campus?</strong>
+              <p>Anexe aqui o PDF baixado do SIG. O arquivo é lido durante o envio, as datas vão para o Notion e o PDF não fica armazenado no site.</p>
+            </div>
+            <label>
+              <span>Planos de ensino em PDF</span>
+              <input
+                name="plans"
+                type="file"
+                accept="application/pdf,.pdf"
+                multiple
+                required
+                disabled={!notionConnected || Boolean(actionLoading)}
+              />
+            </label>
+            <button className="button secondary" disabled={!notionConnected || Boolean(actionLoading)}>
+              {actionLoading === "plans" ? "Lendo planos..." : "Adicionar datas dos planos"}
+            </button>
+            <small>Até 6 arquivos, somando no máximo 4 MB.</small>
+          </form>
           {actionMessage && <p className={`feedback ${actionError ? "error" : "success"}`}>{actionMessage}</p>}
         </div>
       </article>

@@ -11,6 +11,8 @@ import { setupAttendancePanel } from "@campus/notion/setup-attendance";
 import { setupImportantDatesPanel } from "@campus/notion/setup-important-dates";
 import { setupNotion } from "@campus/notion/setup-notion";
 import { discoverTeachingPlans } from "@campus/plans/discover-teaching-plans";
+import { parseTeachingPlanText } from "@campus/plans/parse-teaching-plan";
+import { extractPdfText } from "@campus/plans/pdf-text";
 import { syncTasks } from "@campus/sync/sync-tasks";
 
 import type { WebServerConfig } from "./config";
@@ -101,7 +103,7 @@ export async function setupTaskPanel(config: WebServerConfig, token: string) {
   const runtime = await runtimeInstallation(config, token);
   const loadedTasks = await tasks(runtime);
   const parentPageId = await notionParentPageId(runtime.notionToken);
-  const result = await setupNotion({
+  const options = {
     token: runtime.notionToken,
     parentPageUrl: `https://www.notion.so/${parentPageId.replaceAll("-", "")}`,
     courses: [
@@ -111,12 +113,21 @@ export async function setupTaskPanel(config: WebServerConfig, token: string) {
           .filter((course): course is string => Boolean(course)),
       ),
     ],
-    existingDataSourceId: runtime.dataSourceId,
-    saveDataSourceId: async (dataSourceId) => {
+    saveDataSourceId: async (dataSourceId: string) => {
       await updateInstallation(config, token, { notionDataSourceId: dataSourceId });
     },
     saveAssigneeUserId: async () => {},
-  });
+  };
+  let result;
+  try {
+    result = await setupNotion({ ...options, existingDataSourceId: runtime.dataSourceId });
+  } catch (error) {
+    const missingPreviousPanel = runtime.dataSourceId && error instanceof Error &&
+      /HTTP 404|object_not_found|could not find/i.test(error.message);
+    if (!missingPreviousPanel) throw error;
+    await updateInstallation(config, token, { notionDataSourceId: null });
+    result = await setupNotion(options);
+  }
   return { ...result, tasksFound: loadedTasks.length };
 }
 
@@ -178,9 +189,69 @@ async function setupImportantDatesForRuntime(runtime: RuntimeInstallation) {
 
 export async function structureNotion(config: WebServerConfig, token: string) {
   const tasksPanel = await setupTaskPanel(config, token);
-  const attendance = await setupAttendance(config, token);
-  const importantDates = await setupImportantDates(config, token);
-  return { tasksPanel, attendance, importantDates };
+  const [attendanceResult, datesResult] = await Promise.allSettled([
+    setupAttendance(config, token),
+    setupImportantDates(config, token),
+  ]);
+  const warnings: string[] = [];
+  if (attendanceResult.status === "rejected") {
+    warnings.push("O painel de tarefas foi criado, mas o controle de faltas não pôde ser atualizado agora.");
+  }
+  if (datesResult.status === "rejected") {
+    warnings.push("O painel de tarefas foi criado, mas os planos do Campus não puderam ser consultados agora.");
+  }
+  return {
+    tasksPanel,
+    ...(attendanceResult.status === "fulfilled" ? { attendance: attendanceResult.value } : {}),
+    ...(datesResult.status === "fulfilled" ? { importantDates: datesResult.value } : {}),
+    warnings,
+  };
+}
+
+function currentSemester(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}/${now.getUTCMonth() >= 6 ? 2 : 1}`;
+}
+
+export async function importTeachingPlans(
+  config: WebServerConfig,
+  token: string,
+  files: Array<{ bytes: Uint8Array; name: string }>,
+) {
+  const runtime = await runtimeInstallation(config, token);
+  const dates = [];
+  const rejected: string[] = [];
+  for (const file of files) {
+    try {
+      const text = await extractPdfText(file.bytes);
+      const parsed = parseTeachingPlanText(text, {
+        code: "PLANO",
+        name: file.name.replace(/\.pdf$/i, ""),
+        period: currentSemester(),
+      });
+      if (!parsed.length) {
+        rejected.push(file.name);
+        continue;
+      }
+      dates.push(...parsed.map((date) => ({
+        ...date,
+        notes: "Data extraída de um plano de ensino enviado manualmente no Campus Task Sync.",
+      })));
+    } catch {
+      rejected.push(file.name);
+    }
+  }
+  if (!dates.length) {
+    throw new Error("Nenhuma avaliação foi reconhecida nos planos enviados.");
+  }
+  const parentPageId = await notionParentPageId(runtime.notionToken);
+  const uniqueDates = [...new Map(dates.map((date) => [date.id, date])).values()];
+  const result = await setupImportantDatesPanel({
+    token: runtime.notionToken,
+    parentPageId,
+    dates: uniqueDates,
+  });
+  return { ...result, dates: uniqueDates.length, files: files.length, rejected };
 }
 
 export async function synchronize(config: WebServerConfig, token: string) {
@@ -196,8 +267,16 @@ async function synchronizeRuntime(runtime: RuntimeInstallation) {
     dataSourceId: runtime.dataSourceId,
   });
   const result = await syncTasks(loadedTasks, destination);
-  const importantDates = await setupImportantDatesForRuntime(runtime);
-  return { calendarTasks: loadedTasks.length, importantDates, ...result };
+  try {
+    const importantDates = await setupImportantDatesForRuntime(runtime);
+    return { calendarTasks: loadedTasks.length, importantDates, warnings: [], ...result };
+  } catch {
+    return {
+      calendarTasks: loadedTasks.length,
+      warnings: ["As tarefas foram sincronizadas, mas os planos do Campus não puderam ser consultados agora."],
+      ...result,
+    };
+  }
 }
 
 export async function synchronizeReadyInstallations(config: WebServerConfig) {

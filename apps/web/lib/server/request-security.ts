@@ -6,6 +6,20 @@ export class WebRequestError extends Error {
   }
 }
 
+export function safeActionError(
+  error: unknown,
+  fallback: string,
+): { message: string; status: number } {
+  if (error instanceof WebRequestError) return { message: error.message, status: error.status };
+  if (error instanceof Error && /Nenhuma página foi compartilhada|HTTP (401|403|404)|object_not_found/i.test(error.message)) {
+    return {
+      message: "O Notion não encontrou a página ou painel autorizado. Reconecte o Notion e escolha a página novamente.",
+      status: 409,
+    };
+  }
+  return { message: fallback, status: 500 };
+}
+
 export function requireSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
   if (!origin) return;
