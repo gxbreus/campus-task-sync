@@ -47,6 +47,9 @@ export async function saveNotionInstallation(
       notion_bot_id: installation.notionBotId,
       notion_access_token_encrypted: installation.notionAccessTokenEncrypted,
       notion_refresh_token_encrypted: installation.notionRefreshTokenEncrypted,
+      calendar_url_encrypted: null,
+      moodle_token_encrypted: null,
+      notion_data_source_id: null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "notion_workspace_id" },
@@ -89,7 +92,7 @@ export async function updateInstallation(
   values: {
     calendarUrlEncrypted?: string;
     moodleTokenEncrypted?: string;
-    notionDataSourceId?: string;
+    notionDataSourceId?: string | null;
   },
 ): Promise<void> {
   const payload = {
@@ -99,7 +102,7 @@ export async function updateInstallation(
     ...(values.moodleTokenEncrypted
       ? { moodle_token_encrypted: values.moodleTokenEncrypted }
       : {}),
-    ...(values.notionDataSourceId
+    ...(values.notionDataSourceId !== undefined
       ? { notion_data_source_id: values.notionDataSourceId }
       : {}),
     updated_at: new Date().toISOString(),
@@ -111,6 +114,17 @@ export async function updateInstallation(
     .select("id")
     .maybeSingle();
   if (error || !data) throw new Error("Não foi possível atualizar a instalação.");
+}
+
+export async function deleteInstallation(
+  config: WebServerConfig,
+  installationToken: string,
+): Promise<void> {
+  const { error } = await client(config)
+    .from("web_installations")
+    .delete()
+    .eq("session_hash", hashOpaqueToken(installationToken));
+  if (error) throw new Error("Não foi possível apagar a instalação.");
 }
 
 export async function listReadyInstallations(

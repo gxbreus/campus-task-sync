@@ -43,6 +43,11 @@ disciplinas e extrai o texto apenas durante a execução. O PDF e o texto integr
 não são armazenados no Supabase; somente as datas acadêmicas identificadas são
 enviadas ao painel autorizado no Notion.
 
+O mesmo tratamento é aplicado a planos enviados manualmente na interface: o
+arquivo é limitado por tamanho, processado durante a requisição e descartado.
+Somente provas, trabalhos e outras datas reconhecidas são gravadas na página do
+Notion escolhida pelo estudante.
+
 ## Dados utilizados
 
 - **Campus Virtual:** a URL privada do calendário e, opcionalmente, o token do
@@ -98,6 +103,9 @@ nomes, enunciados e links privados.
 - revogue o token do Moodle nas preferências de segurança do Campus;
 - remova a conexão na página do Notion e revogue a integração;
 - limpe os dados do site no navegador para apagar o cookie da instalação;
+- use **Apagar configuração e recomeçar** no beta para excluir também a
+  instalação cifrada do Supabase; apagar somente cookies não remove os dados do
+  servidor;
 - revogue o acesso do aplicativo na Conta Google;
 - apague os secrets em **Settings → Secrets and variables → Actions**;
 - remova `.env`, `.google-drive-credentials.json` e
