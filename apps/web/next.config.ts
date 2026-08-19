@@ -34,6 +34,10 @@ export const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // O PDF.js precisa permanecer como pacote Node na função serverless. Quando
+  // o Webpack o incorpora em um único chunk, os módulos auxiliares usados para
+  // extrair texto podem não existir no runtime da Vercel.
+  serverExternalPackages: ["pdfjs-dist"],
   webpack(config) {
     config.resolve.extensionAlias = {
       ...config.resolve.extensionAlias,
