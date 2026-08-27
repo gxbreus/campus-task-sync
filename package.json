@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
-    "googleapis": "^174.0.1",
+    "googleapis": "^176.0.0",
     "ical.js": "^2.2.1",
     "pdfjs-dist": "^5.4.624"
   },
